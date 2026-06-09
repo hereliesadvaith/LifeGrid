@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#000000" />
+<title>LifeGrid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#000000;
+    --surface:#0c0c0c;
+    --surface-2:#161616;
+    --surface-3:#1e1e1e;
+    --line:#262626;
+    --line-soft:#1a1a1a;
+    --text:#ffffff;
+    --text-mid:#9a9a9a;
+    --text-dim:#5e5e5e;
+    --accent:#d71921;
+    --r-card:16px;
+    --r-chip:999px;
+    --pad:20px;
+    --sb-h:46px;
+    --display:"Doto",monospace;
+    --ui:"Space Grotesk",sans-serif;
+    --mono:"Space Mono",monospace;
+  }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;background:#000;}
+  body{
+    font-family:var(--ui);color:var(--text);min-height:100dvh;
+    display:flex;justify-content:center;
+    background:radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1.4px) 0 0/22px 22px, var(--bg);
+  }
+
+  .app{
+    width:100%;max-width:430px;height:100dvh;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;
+    background:radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1.4px) 0 0/22px 22px, var(--bg);
+    border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft);
+  }
+
+  /* status bar */
+  .statusbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px var(--pad) 8px;
+    font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:1px;
+    color:var(--text);z-index:50;background:transparent;
+  }
+  .statusbar .right{display:flex;align-items:center;gap:8px;}
+  .dotrow{display:flex;gap:3px;align-items:center;}
+  .dotrow i{width:4px;height:4px;border-radius:50%;background:var(--text);display:block;}
+  .dotrow i.off{background:var(--text-dim);}
+  .batt{font-family:var(--mono);font-size:11px;color:var(--text-mid);}
+
+  /* tabs */
+  .tabs{position:relative;display:flex;padding:6px var(--pad) 0;gap:8px;}
+  .tab{
+    flex:0 0 auto;background:none;border:none;cursor:pointer;padding:4px 2px 14px;
+    font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:1.5px;
+    color:var(--text-dim);transition:color .2s ease;margin-right:18px;
+  }
+  .tab.active{color:var(--text);}
+  .tab-underline{
+    position:absolute;left:var(--pad);bottom:0;height:3px;width:46px;border-radius:3px;
+    background:var(--accent);transition:transform .12s linear, width .2s ease;
+  }
+  .tabs::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line-soft);}
+
+  /* pager */
+  .pager{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;}
+  .pager::-webkit-scrollbar{display:none;}
+  .pager{scrollbar-width:none;}
+  .page{min-width:100%;width:100%;scroll-snap-align:start;overflow-y:auto;padding:0 var(--pad);}
+  .page::-webkit-scrollbar{display:none;}
+
+  .page-head{padding:22px 0 14px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
+    color:var(--text-dim);display:flex;align-items:center;gap:8px;
+  }
+  .eyebrow b{color:var(--accent);font-weight:700;}
+  .page-head .count{
+    font-family:var(--mono);font-size:13px;color:var(--text-mid);font-weight:700;
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:4px 10px;margin-left:auto;
+  }
+  .head-line{display:flex;align-items:center;}
+
+  /* lists + cards */
+  .list{display:flex;flex-direction:column;gap:12px;padding-bottom:130px;}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:18px;cursor:pointer;transition:transform .12s ease, border-color .12s ease;
+    animation:rise .35s ease backwards;
+  }
+  .card:active{transform:scale(.985);border-color:#3a3a3a;}
+  .card .row1{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .card .mname{font-family:var(--ui);font-weight:600;font-size:19px;}
+  .card .arrow{color:var(--text-dim);font-family:var(--mono);font-size:18px;}
+  .card .row2{display:flex;align-items:center;justify-content:space-between;margin-top:14px;gap:10px;}
+  .meta-mono{font-family:var(--mono);font-size:12px;color:var(--text-mid);}
+  .typedots{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;}
+  .tdot{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text-mid);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-chip);padding:3px 8px;}
+  .tdot.more{color:var(--text-dim);border-style:dashed;}
+  .recnum{font-family:var(--display);font-weight:900;font-size:15px;color:var(--text);}
+
+  /* field + record rows */
+  .field{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    animation:rise .3s ease backwards;}
+  .field .fleft{display:flex;align-items:center;gap:13px;min-width:0;}
+  .field .idx{font-family:var(--mono);font-size:11px;color:var(--text-dim);width:22px;flex:0 0 auto;}
+  .field .fname{font-family:var(--ui);font-weight:500;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .field .fright{display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+  .typecode{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--text);
+    background:var(--surface-3);border:1px solid var(--line);border-radius:var(--r-chip);padding:5px 11px;}
+  .removebtn{background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;line-height:1;padding:2px;transition:color .12s;}
+  .removebtn:active{color:var(--accent);}
+
+  .record{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 16px;
+    animation:rise .3s ease backwards;}
+  .record .rtop{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .record .rleft{display:flex;align-items:center;gap:12px;min-width:0;}
+  .record .rprimary{font-family:var(--ui);font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .record .rmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+  .kv{font-family:var(--mono);font-size:11px;color:var(--text-mid);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:8px;padding:4px 8px;}
+  .kv b{color:var(--text-dim);font-weight:400;}
+
+  /* empty */
+  .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;gap:18px;padding:60px 20px 120px;color:var(--text-dim);}
+  .empty .glyph{width:88px;height:88px;border-radius:24px;border:1px dashed var(--line);display:grid;place-items:center;
+    background:radial-gradient(circle, rgba(255,255,255,0.08) 1.3px, transparent 1.6px) 0 0/12px 12px;}
+  .empty .glyph span{font-family:var(--display);font-weight:900;font-size:30px;color:var(--text-mid);}
+  .empty h3{font-family:var(--ui);font-weight:600;font-size:18px;color:var(--text);margin:0;}
+  .empty p{font-family:var(--ui);font-size:14px;line-height:1.55;color:var(--text-dim);max-width:250px;margin:0;}
+  .ghostbtn{font-family:var(--ui);font-weight:600;font-size:14px;color:var(--text);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:12px 20px;cursor:pointer;}
+  .ghostbtn:active{transform:scale(.97);}
+
+  /* bottom bar */
+  .bottombar{position:absolute;left:0;right:0;bottom:0;z-index:15;
+    padding:16px var(--pad) calc(20px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top, var(--bg) 55%, transparent);display:none;flex-direction:column;gap:10px;}
+  .bottombar.show{display:flex;}
+  .primary{width:100%;border:none;border-radius:var(--r-chip);background:var(--text);color:#000;cursor:pointer;
+    font-family:var(--ui);font-weight:700;font-size:16px;letter-spacing:.3px;
+    padding:17px;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s, background .12s;}
+  .primary:active{transform:scale(.98);}
+  .primary .plus{font-family:var(--mono);font-weight:700;}
+  .primary.danger{background:transparent;border:1px solid var(--line);color:var(--accent);}
+
+  /* overlay (drill-downs) */
+  .overlay{position:absolute;left:0;right:0;top:0;bottom:0;z-index:30;
+    background:radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1.4px) 0 0/22px 22px, var(--bg);
+    display:flex;flex-direction:column;padding-top:var(--sb-h);
+    transform:translateX(100%);transition:transform .3s cubic-bezier(.22,1,.36,1);}
+  .overlay.open{transform:translateX(0);}
+  .overlay-scroll{flex:1;overflow-y:auto;padding:0 var(--pad);}
+  .overlay-scroll::-webkit-scrollbar{display:none;}
+  .backrow{display:flex;align-items:center;gap:14px;padding:14px 0 4px;}
+  .backbtn{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface);
+    color:var(--text);display:grid;place-items:center;cursor:pointer;font-size:18px;transition:transform .12s;}
+  .backbtn:active{transform:scale(.92);}
+  .backrow .meta{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;}
+  .overlay-title{font-family:var(--display);font-weight:700;font-size:32px;letter-spacing:1px;margin:14px 0 4px;}
+  .overlay-sub{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:18px;}
+
+  /* sheet */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;}
+  .scrim.open{opacity:1;pointer-events:auto;}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:61;background:var(--surface);
+    border-top:1px solid var(--line);border-radius:24px 24px 0 0;
+    padding:10px var(--pad) calc(24px + env(safe-area-inset-bottom));
+    transform:translateY(110%);transition:transform .3s cubic-bezier(.22,1,.36,1);max-height:90%;overflow-y:auto;}
+  .sheet.open{transform:translateY(0);}
+  .sheet::-webkit-scrollbar{display:none;}
+  .grabber{width:38px;height:4px;border-radius:4px;background:var(--line);margin:6px auto 18px;}
+  .sheet h2{font-family:var(--display);font-weight:700;font-size:24px;letter-spacing:1px;margin:0 0 4px;}
+  .sheet .sub{font-family:var(--mono);font-size:11px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:22px;}
+  .flabel{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-mid);margin:0 0 10px;display:block;}
+  .input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--text);
+    font-family:var(--mono);font-size:15px;outline:none;transition:border-color .12s;margin-bottom:22px;}
+  .input::placeholder{color:var(--text-dim);}
+  .input:focus{border-color:var(--text-mid);}
+
+  .typegrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:26px;}
+  .typecard{border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px;cursor:pointer;text-align:left;position:relative;transition:border-color .12s, background .12s, transform .1s;}
+  .typecard:active{transform:scale(.97);}
+  .typecard .code{font-family:var(--display);font-weight:900;font-size:20px;letter-spacing:1px;color:var(--text);}
+  .typecard .lbl{font-family:var(--ui);font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .typecard.sel{border-color:var(--accent);background:#160708;}
+  .typecard .seldot{position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%;background:transparent;}
+  .typecard.sel .seldot{background:var(--accent);}
+  .typecard.full{grid-column:1/-1;}
+
+  /* dynamic data form */
+  .formfield{margin-bottom:20px;}
+  .formfield .fhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .formfield .fhead .flabel{margin:0;}
+  .formfield .ftag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:1px;color:var(--text-dim);
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:2px 8px;}
+  .dinput{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--text);
+    font-family:var(--mono);font-size:15px;outline:none;transition:border-color .12s;}
+  .dinput:focus{border-color:var(--text-mid);}
+  .dinput::placeholder{color:var(--text-dim);}
+  input[type=date].dinput{color-scheme:dark;}
+  .boolrow{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:13px 14px;}
+  .boolrow span{font-family:var(--mono);font-size:13px;color:var(--text-mid);}
+  .toggle{width:48px;height:28px;border-radius:999px;background:var(--surface-3);border:1px solid var(--line);position:relative;cursor:pointer;transition:background .15s, border-color .15s;flex:0 0 auto;}
+  .toggle.on{background:var(--accent);border-color:var(--accent);}
+  .toggle .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s;}
+  .toggle.on .knob{transform:translateX(20px);}
+
+  @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="statusbar" id="statusbar">
+      <span>10:24</span>
+      <div class="right">
+        <div class="dotrow"><i></i><i></i><i></i><i class="off"></i></div>
+        <span class="batt">82%</span>
+      </div>
+    </div>
+
+    <!-- tabs -->
+    <div class="tabs">
+      <button class="tab active" data-page="0">LifeGrid</button>
+      <button class="tab" data-page="1">Schemas</button>
+      <div class="tab-underline" id="tab-underline"></div>
+    </div>
+
+    <!-- pager -->
+    <div class="pager" id="pager">
+
+      <!-- PAGE 0: LIFEGRID (data) -->
+      <section class="page" id="page-lifegrid">
+        <div class="page-head">
+          <div class="eyebrow"><b>&#9679;</b> Your records</div>
+          <div class="head-line">
+            <span class="meta-mono" style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Pick a model to log data</span>
+            <span class="count" id="lg-count">0</span>
+          </div>
+        </div>
+        <div class="list" id="lg-list"></div>
+        <div class="empty hidden" id="lg-empty">
+          <div class="glyph"><span>&#9633;</span></div>
+          <h3>Nothing to fill yet</h3>
+          <p>Create a model in Schemas first, then come back here to start logging data into it.</p>
+          <button class="ghostbtn" id="lg-goto-schemas">Go to Schemas &rsaquo;</button>
+        </div>
+      </section>
+
+      <!-- PAGE 1: SCHEMAS (structure) -->
+      <section class="page" id="page-schemas">
+        <div class="page-head">
+          <div class="eyebrow"><b>&#9679;</b> Data structure</div>
+          <div class="head-line">
+            <span class="meta-mono" style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Define models and fields</span>
+            <span class="count" id="sc-count">0</span>
+          </div>
+        </div>
+        <div class="list" id="sc-list"></div>
+        <div class="empty hidden" id="sc-empty">
+          <div class="glyph"><span>+</span></div>
+          <h3>No models yet</h3>
+          <p>Create your first model to start defining the shape of your data.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- bottom bars -->
+    <div class="bottombar" id="bar-schemas">
+      <button class="primary" id="new-model-btn"><span class="plus">+</span> New model</button>
+    </div>
+    <div class="bottombar" id="bar-records">
+      <button class="primary" id="add-record-btn"><span class="plus">+</span> Add record</button>
+    </div>
+    <div class="bottombar" id="bar-fields">
+      <button class="primary" id="add-field-btn"><span class="plus">+</span> Add field</button>
+      <button class="primary danger" id="delete-model-btn">Delete model</button>
+    </div>
+
+    <!-- OVERLAY: RECORDS (LifeGrid drill-down) -->
+    <div class="overlay" id="overlay-records">
+      <div style="padding:0 var(--pad);">
+        <div class="backrow">
+          <button class="backbtn" data-close="records">&lsaquo;</button>
+          <span class="meta">LifeGrid &middot; Data</span>
+        </div>
+        <div class="overlay-title" id="rec-title">model</div>
+        <div class="overlay-sub" id="rec-sub">0 records</div>
+      </div>
+      <div class="overlay-scroll">
+        <div class="list" id="rec-list"></div>
+        <div class="empty hidden" id="rec-empty"></div>
+      </div>
+    </div>
+
+    <!-- OVERLAY: FIELDS (Schemas drill-down) -->
+    <div class="overlay" id="overlay-fields">
+      <div style="padding:0 var(--pad);">
+        <div class="backrow">
+          <button class="backbtn" data-close="fields">&lsaquo;</button>
+          <span class="meta">Schemas &middot; Structure</span>
+        </div>
+        <div class="overlay-title" id="fld-title">model</div>
+        <div class="overlay-sub" id="fld-sub">0 fields</div>
+      </div>
+      <div class="overlay-scroll">
+        <div class="list" id="fld-list"></div>
+        <div class="empty hidden" id="fld-empty">
+          <div class="glyph"><span>:</span></div>
+          <h3>No fields yet</h3>
+          <p>Add a field to define what this model stores.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHEET: new model -->
+    <div class="scrim" data-close-sheet="model"></div>
+    <div class="sheet" id="sheet-model">
+      <div class="grabber"></div>
+      <h2>New model</h2>
+      <div class="sub">A collection of records</div>
+      <label class="flabel">Model name</label>
+      <input class="input" id="model-name-input" placeholder="e.g. workouts" autocomplete="off" spellcheck="false" />
+      <button class="primary" id="create-model-confirm">Create model</button>
+    </div>
+
+    <!-- SHEET: add field -->
+    <div class="scrim" data-close-sheet="field"></div>
+    <div class="sheet" id="sheet-field">
+      <div class="grabber"></div>
+      <h2>Add field</h2>
+      <div class="sub">A property on this model</div>
+      <label class="flabel">Field name</label>
+      <input class="input" id="field-name-input" placeholder="e.g. title" autocomplete="off" spellcheck="false" />
+      <label class="flabel">Type</label>
+      <div class="typegrid" id="type-grid"></div>
+      <button class="primary" id="add-field-confirm">Add field</button>
+    </div>
+
+    <!-- SHEET: add record (dynamic) -->
+    <div class="scrim" data-close-sheet="record"></div>
+    <div class="sheet" id="sheet-record">
+      <div class="grabber"></div>
+      <h2>Add record</h2>
+      <div class="sub" id="record-sheet-sub">new entry</div>
+      <div id="record-form"></div>
+      <button class="primary" id="add-record-confirm">Save record</button>
+    </div>
+
+  </div>
+
+<script>
+  var TYPES=[
+    {code:"STR",label:"Text"},
+    {code:"INT",label:"Integer"},
+    {code:"DATE",label:"Date"},
+    {code:"FLOAT",label:"Decimal"},
+    {code:"BOOL",label:"Boolean"}
+  ];
+
+  var models=[
+    {name:"workouts",
+     fields:[{name:"exercise",type:"STR"},{name:"reps",type:"INT"},{name:"weight",type:"FLOAT"},{name:"done",type:"BOOL"},{name:"day",type:"DATE"}],
+     records:[
+       {exercise:"Deadlift",reps:5,weight:100.5,done:true,day:"2026-06-09"},
+       {exercise:"Bench press",reps:8,weight:60,done:false,day:"2026-06-10"}
+     ]},
+    {name:"books",
+     fields:[{name:"title",type:"STR"},{name:"rating",type:"FLOAT"},{name:"finished",type:"BOOL"}],
+     records:[{title:"Dune",rating:4.5,finished:true}]}
+  ];
+
+  var current=null;        // model index for overlays
+  var selectedType="STR";
+  var $=function(id){return document.getElementById(id);};
+
+  function esc(s){return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
+  function fmt(field,val){
+    if(val===undefined||val===null||val==="")return "&mdash;";
+    if(field.type==="BOOL")return val?"true":"false";
+    return esc(val);
+  }
+
+  /* ---------- render lists ---------- */
+  function renderAll(){renderLifeGrid();renderSchemas();}
+
+  function renderLifeGrid(){
+    var list=$("lg-list"),empty=$("lg-empty");
+    list.innerHTML="";
+    $("lg-count").textContent=String(models.length).padStart(2,"0");
+    if(models.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
+    empty.classList.add("hidden");list.classList.remove("hidden");
+    models.forEach(function(m,i){
+      var card=document.createElement("div");
+      card.className="card";card.style.animationDelay=(i*0.04)+"s";
+      card.innerHTML='<div class="row1"><div class="mname">'+esc(m.name)+'</div><div class="arrow">&rsaquo;</div></div>'+
+        '<div class="row2"><span class="recnum">'+m.records.length+' <span style="font-family:var(--mono);font-size:11px;color:var(--text-mid);font-weight:700;">record'+(m.records.length===1?"":"s")+'</span></span>'+
+        '<span class="meta-mono">'+m.fields.length+' field'+(m.fields.length===1?"":"s")+'</span></div>';
+      card.addEventListener("click",function(){openRecords(i);});
+      list.appendChild(card);
+    });
+  }
+
+  function renderSchemas(){
+    var list=$("sc-list"),empty=$("sc-empty");
+    list.innerHTML="";
+    $("sc-count").textContent=String(models.length).padStart(2,"0");
+    if(models.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
+    empty.classList.add("hidden");list.classList.remove("hidden");
+    models.forEach(function(m,i){
+      var codes=m.fields.map(function(f){return f.type;}).filter(function(v,k,a){return a.indexOf(v)===k;});
+      var shown=codes.slice(0,4).map(function(c){return '<span class="tdot">'+c+'</span>';}).join("");
+      var more=codes.length>4?'<span class="tdot more">+'+(codes.length-4)+'</span>':"";
+      var card=document.createElement("div");
+      card.className="card";card.style.animationDelay=(i*0.04)+"s";
+      card.innerHTML='<div class="row1"><div class="mname">'+esc(m.name)+'</div><div class="arrow">&rsaquo;</div></div>'+
+        '<div class="row2"><span class="meta-mono">'+m.fields.length+' field'+(m.fields.length===1?"":"s")+'</span>'+
+        '<div class="typedots">'+shown+more+'</div></div>';
+      card.addEventListener("click",function(){openFields(i);});
+      list.appendChild(card);
+    });
+  }
+
+  /* ---------- records overlay (LifeGrid) ---------- */
+  function renderRecords(){
+    var m=models[current];if(!m)return;
+    $("rec-title").textContent=m.name;
+    $("rec-sub").textContent=m.records.length+" record"+(m.records.length===1?"":"s");
+    var list=$("rec-list"),empty=$("rec-empty");
+    list.innerHTML="";empty.innerHTML="";
+
+    if(m.fields.length===0){
+      list.classList.add("hidden");empty.classList.remove("hidden");
+      empty.innerHTML='<div class="glyph"><span>!</span></div><h3>No structure yet</h3>'+
+        '<p>This model has no fields. Define its fields in Schemas before adding data.</p>'+
+        '<button class="ghostbtn" id="rec-define">Define fields &rsaquo;</button>';
+      $("rec-define").addEventListener("click",function(){closeOverlay("records");setTimeout(function(){openFields(current);},150);});
+      $("bar-records").classList.remove("show");
+      return;
+    }
+    $("bar-records").classList.add("show");
+
+    if(m.records.length===0){
+      list.classList.add("hidden");empty.classList.remove("hidden");
+      empty.innerHTML='<div class="glyph"><span>&#9633;</span></div><h3>No data yet</h3><p>Add your first record to start filling this model.</p>';
+      return;
+    }
+    empty.classList.add("hidden");list.classList.remove("hidden");
+    var primary=m.fields[0];
+    m.records.forEach(function(r,i){
+      var rest=m.fields.slice(1,4).map(function(f){
+        return '<span class="kv"><b>'+esc(f.name)+'</b> '+fmt(f,r[f.name])+'</span>';
+      }).join("");
+      var card=document.createElement("div");
+      card.className="record";card.style.animationDelay=(i*0.04)+"s";
+      card.innerHTML='<div class="rtop"><div class="rleft"><span class="recnum">'+String(i+1).padStart(2,"0")+'</span>'+
+        '<span class="rprimary">'+fmt(primary,r[primary.name])+'</span></div>'+
+        '<button class="removebtn" aria-label="Remove">&times;</button></div>'+
+        (rest?'<div class="rmeta">'+rest+'</div>':"");
+      card.querySelector(".removebtn").addEventListener("click",function(e){e.stopPropagation();m.records.splice(i,1);renderRecords();renderLifeGrid();});
+      list.appendChild(card);
+    });
+  }
+
+  /* ---------- fields overlay (Schemas) ---------- */
+  function renderFields(){
+    var m=models[current];if(!m)return;
+    $("fld-title").textContent=m.name;
+    $("fld-sub").textContent=m.fields.length+" field"+(m.fields.length===1?"":"s");
+    var list=$("fld-list"),empty=$("fld-empty");
+    list.innerHTML="";
+    if(m.fields.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
+    empty.classList.add("hidden");list.classList.remove("hidden");
+    m.fields.forEach(function(f,i){
+      var row=document.createElement("div");
+      row.className="field";row.style.animationDelay=(i*0.04)+"s";
+      row.innerHTML='<div class="fleft"><span class="idx">'+String(i+1).padStart(2,"0")+'</span><span class="fname">'+esc(f.name)+'</span></div>'+
+        '<div class="fright"><span class="typecode">'+f.type+'</span><button class="removebtn" aria-label="Remove">&times;</button></div>';
+      row.querySelector(".removebtn").addEventListener("click",function(e){e.stopPropagation();m.fields.splice(i,1);renderFields();renderSchemas();});
+      list.appendChild(row);
+    });
+  }
+
+  /* ---------- overlay open/close ---------- */
+  function openRecords(i){current=i;renderRecords();$("overlay-records").classList.add("open");updateBars();}
+  function openFields(i){current=i;renderFields();$("overlay-fields").classList.add("open");$("bar-fields").classList.add("show");hidePagerBars();}
+  function closeOverlay(which){
+    $("overlay-"+which).classList.remove("open");
+    if(which==="records")$("bar-records").classList.remove("show");
+    if(which==="fields")$("bar-fields").classList.remove("show");
+    current=null;
+    renderAll();
+    updateBars();
+  }
+  document.querySelectorAll("[data-close]").forEach(function(b){
+    b.addEventListener("click",function(){closeOverlay(b.getAttribute("data-close"));});
+  });
+
+  /* ---------- bottom bar control ---------- */
+  function hidePagerBars(){$("bar-schemas").classList.remove("show");}
+  function updateBars(){
+    // only when no overlay open
+    var recOpen=$("overlay-records").classList.contains("open");
+    var fldOpen=$("overlay-fields").classList.contains("open");
+    if(recOpen||fldOpen)return;
+    $("bar-records").classList.remove("show");
+    $("bar-fields").classList.remove("show");
+    if(activePage()===1){$("bar-schemas").classList.add("show");}
+    else{$("bar-schemas").classList.remove("show");}
+  }
+
+  /* ---------- pager + tabs ---------- */
+  var pager=$("pager"),underline=$("tab-underline"),tabs=document.querySelectorAll(".tab");
+  function activePage(){return Math.round(pager.scrollLeft/pager.clientWidth);}
+  function syncTabs(){
+    var w=pager.clientWidth||1;
+    var p=pager.scrollLeft/w;            // 0..1
+    underline.style.transform="translateX("+(p*(w-underline.offsetWidth-40))+"px)";
+    var idx=Math.round(p);
+    tabs.forEach(function(t,k){t.classList.toggle("active",k===idx);});
+  }
+  pager.addEventListener("scroll",function(){window.requestAnimationFrame(function(){syncTabs();updateBars();});});
+  tabs.forEach(function(t){t.addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth*parseInt(t.dataset.page,10),behavior:"smooth"});});});
+  $("lg-goto-schemas").addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth,behavior:"smooth"});});
+
+  /* ---------- sheets ---------- */
+  function openSheet(n){$("sheet-"+n).classList.add("open");document.querySelector('[data-close-sheet="'+n+'"]').classList.add("open");}
+  function closeSheet(n){$("sheet-"+n).classList.remove("open");document.querySelector('[data-close-sheet="'+n+'"]').classList.remove("open");}
+  document.querySelectorAll("[data-close-sheet]").forEach(function(s){s.addEventListener("click",function(){closeSheet(s.getAttribute("data-close-sheet"));});});
+
+  /* new model */
+  $("new-model-btn").addEventListener("click",function(){$("model-name-input").value="";openSheet("model");setTimeout(function(){$("model-name-input").focus();},280);});
+  $("create-model-confirm").addEventListener("click",function(){
+    var name=$("model-name-input").value.trim();if(!name)return;
+    models.push({name:name,fields:[],records:[]});closeSheet("model");renderAll();
+  });
+
+  /* type grid */
+  function renderTypeGrid(){
+    var grid=$("type-grid");grid.innerHTML="";
+    TYPES.forEach(function(t,idx){
+      var c=document.createElement("button");
+      c.className="typecard"+(t.code===selectedType?" sel":"")+(idx===TYPES.length-1?" full":"");
+      c.innerHTML='<span class="seldot"></span><div class="code">'+t.code+'</div><div class="lbl">'+t.label+'</div>';
+      c.addEventListener("click",function(){selectedType=t.code;renderTypeGrid();});
+      grid.appendChild(c);
+    });
+  }
+
+  /* add field */
+  $("add-field-btn").addEventListener("click",function(){$("field-name-input").value="";selectedType="STR";renderTypeGrid();openSheet("field");setTimeout(function(){$("field-name-input").focus();},280);});
+  $("add-field-confirm").addEventListener("click",function(){
+    var name=$("field-name-input").value.trim();if(!name||current===null)return;
+    models[current].fields.push({name:name,type:selectedType});closeSheet("field");renderFields();renderSchemas();
+  });
+
+  /* delete model */
+  $("delete-model-btn").addEventListener("click",function(){if(current===null)return;models.splice(current,1);$("overlay-fields").classList.remove("open");$("bar-fields").classList.remove("show");current=null;renderAll();updateBars();});
+
+  /* add record (dynamic form) */
+  function buildRecordForm(){
+    var m=models[current];var form=$("record-form");form.innerHTML="";
+    $("record-sheet-sub").textContent="new "+m.name.replace(/s$/,"")+" entry";
+    m.fields.forEach(function(f){
+      var wrap=document.createElement("div");wrap.className="formfield";
+      var head='<div class="fhead"><label class="flabel">'+esc(f.name)+'</label><span class="ftag">'+f.type+'</span></div>';
+      var control="";
+      if(f.type==="BOOL"){
+        control='<div class="boolrow"><span>false / true</span><div class="toggle" data-field="'+esc(f.name)+'"><div class="knob"></div></div></div>';
+      }else if(f.type==="INT"){
+        control='<input class="dinput" data-field="'+esc(f.name)+'" data-type="INT" type="number" inputmode="numeric" step="1" placeholder="0" />';
+      }else if(f.type==="FLOAT"){
+        control='<input class="dinput" data-field="'+esc(f.name)+'" data-type="FLOAT" type="number" inputmode="decimal" step="any" placeholder="0.0" />';
+      }else if(f.type==="DATE"){
+        control='<input class="dinput" data-field="'+esc(f.name)+'" data-type="DATE" type="date" />';
+      }else{
+        control='<input class="dinput" data-field="'+esc(f.name)+'" data-type="STR" type="text" placeholder="Enter '+esc(f.name)+'" />';
+      }
+      wrap.innerHTML=head+control;form.appendChild(wrap);
+    });
+    form.querySelectorAll(".toggle").forEach(function(tg){tg.addEventListener("click",function(){tg.classList.toggle("on");});});
+  }
+  $("add-record-btn").addEventListener("click",function(){if(current===null)return;buildRecordForm();openSheet("record");});
+  $("add-record-confirm").addEventListener("click",function(){
+    if(current===null)return;
+    var m=models[current];var rec={};
+    $("record-form").querySelectorAll(".dinput").forEach(function(inp){
+      var k=inp.getAttribute("data-field"),ty=inp.getAttribute("data-type"),v=inp.value;
+      if(v===""){rec[k]="";}
+      else if(ty==="INT"){rec[k]=parseInt(v,10);}
+      else if(ty==="FLOAT"){rec[k]=parseFloat(v);}
+      else{rec[k]=v;}
+    });
+    $("record-form").querySelectorAll(".toggle").forEach(function(tg){rec[tg.getAttribute("data-field")]=tg.classList.contains("on");});
+    m.records.push(rec);closeSheet("record");renderRecords();renderLifeGrid();
+  });
+
+  /* enter to submit */
+  $("model-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("create-model-confirm").click();});
+  $("field-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("add-field-confirm").click();});
+
+  /* init */
+  document.documentElement.style.setProperty("--sb-h",$("statusbar").offsetHeight+"px");
+  renderAll();renderTypeGrid();syncTabs();updateBars();
+  window.addEventListener("resize",function(){syncTabs();document.documentElement.style.setProperty("--sb-h",$("statusbar").offsetHeight+"px");});
+</script>
+</body>
+</html>
