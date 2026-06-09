@@ -55,7 +55,7 @@ CREATE TABLE records (
   updated_at INTEGER NOT NULL
 );
 
-CREATE TABLE values (
+CREATE TABLE field_values (        -- named `field_values`: `values` is a SQL reserved word
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   record_id  INTEGER NOT NULL REFERENCES records(id) ON DELETE CASCADE,
   field_id   INTEGER NOT NULL REFERENCES fields(id)  ON DELETE CASCADE,

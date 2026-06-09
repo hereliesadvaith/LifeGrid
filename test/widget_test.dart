@@ -1,30 +1,40 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:lifegrid_flutter/main.dart';
+import 'package:lifegrid_flutter/data/field_type.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('FieldType encode/decode', () {
+    test('BOOL round-trips through canonical form', () {
+      expect(FieldType.bool_.encode(true), '1');
+      expect(FieldType.bool_.encode(false), '0');
+      expect(FieldType.bool_.decode('1'), true);
+      expect(FieldType.bool_.decode('0'), false);
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    test('empty values encode to null', () {
+      expect(FieldType.str.encode(''), isNull);
+      expect(FieldType.int_.encode(''), isNull);
+      expect(FieldType.str.decode(null), isNull);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('numbers decode to typed values', () {
+      expect(FieldType.int_.decode('42'), 42);
+      expect(FieldType.float.decode('4.5'), 4.5);
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  group('FieldType validation', () {
+    test('rejects non-numeric INT/FLOAT and bad dates', () {
+      expect(FieldType.int_.validate('abc'), isNotNull);
+      expect(FieldType.float.validate('1.2.3'), isNotNull);
+      expect(FieldType.date.validate('not-a-date'), isNotNull);
+    });
+
+    test('accepts valid input and empty', () {
+      expect(FieldType.int_.validate('10'), isNull);
+      expect(FieldType.float.validate('10.5'), isNull);
+      expect(FieldType.date.validate('2026-06-10'), isNull);
+      expect(FieldType.str.validate(''), isNull);
+    });
   });
 }
