@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#000000" />
-<title>LifeGrid</title>
+<title>Lifegrid</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Doto:wght@500;700;900&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
@@ -235,7 +235,7 @@
 
     <!-- tabs -->
     <div class="tabs">
-      <button class="tab active" data-page="0">LifeGrid</button>
+      <button class="tab active" data-page="0">Lifegrid</button>
       <button class="tab" data-page="1">Schemas</button>
       <div class="tab-underline" id="tab-underline"></div>
     </div>
@@ -292,12 +292,12 @@
       <button class="primary danger" id="delete-model-btn">Delete model</button>
     </div>
 
-    <!-- OVERLAY: RECORDS (LifeGrid drill-down) -->
+    <!-- OVERLAY: RECORDS (Lifegrid drill-down) -->
     <div class="overlay" id="overlay-records">
       <div style="padding:0 var(--pad);">
         <div class="backrow">
           <button class="backbtn" data-close="records">&lsaquo;</button>
-          <span class="meta">LifeGrid &middot; Data</span>
+          <span class="meta">Lifegrid &middot; Data</span>
         </div>
         <div class="overlay-title" id="rec-title">model</div>
         <div class="overlay-sub" id="rec-sub">0 records</div>
@@ -397,9 +397,9 @@
   }
 
   /* ---------- render lists ---------- */
-  function renderAll(){renderLifeGrid();renderSchemas();}
+  function renderAll(){renderLifegrid();renderSchemas();}
 
-  function renderLifeGrid(){
+  function renderLifegrid(){
     var list=$("lg-list"),empty=$("lg-empty");
     list.innerHTML="";
     $("lg-count").textContent=String(models.length).padStart(2,"0");
@@ -436,7 +436,7 @@
     });
   }
 
-  /* ---------- records overlay (LifeGrid) ---------- */
+  /* ---------- records overlay (Lifegrid) ---------- */
   function renderRecords(){
     var m=models[current];if(!m)return;
     $("rec-title").textContent=m.name;
@@ -472,7 +472,7 @@
         '<span class="rprimary">'+fmt(primary,r[primary.name])+'</span></div>'+
         '<button class="removebtn" aria-label="Remove">&times;</button></div>'+
         (rest?'<div class="rmeta">'+rest+'</div>':"");
-      card.querySelector(".removebtn").addEventListener("click",function(e){e.stopPropagation();m.records.splice(i,1);renderRecords();renderLifeGrid();});
+      card.querySelector(".removebtn").addEventListener("click",function(e){e.stopPropagation();m.records.splice(i,1);renderRecords();renderLifegrid();});
       list.appendChild(card);
     });
   }
@@ -607,7 +607,7 @@
       else{rec[k]=v;}
     });
     $("record-form").querySelectorAll(".toggle").forEach(function(tg){rec[tg.getAttribute("data-field")]=tg.classList.contains("on");});
-    m.records.push(rec);closeSheet("record");renderRecords();renderLifeGrid();
+    m.records.push(rec);closeSheet("record");renderRecords();renderLifegrid();
   });
 
   /* enter to submit */

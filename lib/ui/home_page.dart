@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
   final _controller = PageController();
   double _page = 0; // continuous page offset, drives the underline
 
-  static const _tabs = ['LifeGrid', 'Schemas'];
+  static const _tabs = ['Lifegrid', 'Schemas'];
 
   @override
   void initState() {
@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
                         child: PageView(
                           controller: _controller,
                           children: [
-                            LifeGridTab(onGoToSchemas: () => _goTo(1)),
+                            LifegridTab(onGoToSchemas: () => _goTo(1)),
                             const SchemasTab(),
                           ],
                         ),

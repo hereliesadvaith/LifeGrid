@@ -1,6 +1,6 @@
 {
-    "name": "lifegrid_flutter",
-    "short_name": "lifegrid_flutter",
+    "name": "Lifegrid",
+    "short_name": "Lifegrid",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

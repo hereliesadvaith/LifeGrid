@@ -2,7 +2,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
-/// Opens (and creates on first run) the LifeGrid SQLite database.
+/// Opens (and creates on first run) the Lifegrid SQLite database.
 ///
 /// Schema = metadata + EAV (see docs/IMPLEMENTATION_PLAN.md §2):
 ///   models -> fields -> records -> values

@@ -1,4 +1,4 @@
-package com.example.lifegrid_flutter
+package com.example.lifegrid
 
 import io.flutter.embedding.android.FlutterActivity
 

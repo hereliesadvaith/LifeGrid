@@ -12,8 +12,8 @@ import '../widgets/rise_in.dart';
 import 'records_page.dart';
 
 /// Tab 1 — pick a model to log data into. Shows record + field counts.
-class LifeGridTab extends StatelessWidget {
-  const LifeGridTab({super.key, required this.onGoToSchemas});
+class LifegridTab extends StatelessWidget {
+  const LifegridTab({super.key, required this.onGoToSchemas});
 
   final VoidCallback onGoToSchemas;
 

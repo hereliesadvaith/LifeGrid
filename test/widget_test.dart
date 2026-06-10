@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:lifegrid_flutter/data/field_type.dart';
+import 'package:lifegrid/data/field_type.dart';
 
 void main() {
   group('FieldType encode/decode', () {

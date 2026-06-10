@@ -1,4 +1,4 @@
-# LifeGrid — Implementation Plan
+# Lifegrid — Implementation Plan
 
 > Porting the `schema_app.html` prototype to a Flutter app, local-first (no login),
 > persisted with **raw sqflite**. This is a design/architecture doc — no code yet.
@@ -10,11 +10,11 @@
 A personal no-code database. Two tabs:
 
 - **Schemas** — define *models* (e.g. `workouts`) and their typed *fields*.
-- **LifeGrid** — pick a model and log *records* into it with a type-aware form.
+- **Lifegrid** — pick a model and log *records* into it with a type-aware form.
 
 Field types (from the prototype): `STR`, `INT`, `FLOAT`, `DATE`, `BOOL`.
 
-The core insight to preserve: **structure (Schemas) is separate from data (LifeGrid)**,
+The core insight to preserve: **structure (Schemas) is separate from data (Lifegrid)**,
 and the record form adapts to each field's type.
 
 ---
@@ -102,7 +102,7 @@ lib/
   state/
     app_store.dart          # ChangeNotifier wrapping the repository
   ui/
-    home_page.dart          # tabs + PageView (LifeGrid / Schemas)
+    home_page.dart          # tabs + PageView (Lifegrid / Schemas)
     lifegrid/
       lifegrid_tab.dart     # model list (record counts)
       records_page.dart     # drill-down: records for one model
@@ -156,7 +156,7 @@ accent `#d71921`, card radius `16`, chip radius `999`, the dotted-grid backgroun
 2. **Data layer** — `database.dart` (open + create tables), `field_type.dart`, `models_repository.dart` with full CRUD. Unit-test the repo against an in-memory DB.
 3. **State** — `app_store.dart` (`ChangeNotifier`) exposing models, fields, records and mutation methods.
 4. **Schemas tab** — model list → new-model sheet → fields overlay → add/remove field sheet → delete model. Enforce the **schema-lock rule** (see §7.2): once a model has ≥1 record, field add/remove/edit is disabled in the UI (controls greyed out with a hint) and rejected in the repository.
-5. **LifeGrid tab** — model list with counts → records overlay → dynamic record form for **both add and edit** (tap a record to edit) → delete record.
+5. **Lifegrid tab** — model list with counts → records overlay → dynamic record form for **both add and edit** (tap a record to edit) → delete record.
 6. **Polish** — empty states, staggered animations, singular/plural labels, edge cases (model with no fields, locked-schema hint, etc.).
 
 ---

@@ -8,18 +8,18 @@ import 'ui/home_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const LifeGridApp());
+  runApp(const LifegridApp());
 }
 
-class LifeGridApp extends StatelessWidget {
-  const LifeGridApp({super.key});
+class LifegridApp extends StatelessWidget {
+  const LifegridApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => AppStore()..load(),
       child: MaterialApp(
-        title: 'LifeGrid',
+        title: 'Lifegrid',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           useMaterial3: true,
