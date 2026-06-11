@@ -6,7 +6,7 @@ import '../../models/record_entry.dart';
 import '../../state/app_store.dart';
 import '../../theme/tokens.dart';
 import '../../theme/typography.dart';
-import '../schemas/fields_page.dart';
+import '../schema/fields_page.dart';
 import '../widgets/chips.dart';
 import '../widgets/common.dart';
 import '../widgets/dotted_background.dart';
@@ -15,7 +15,7 @@ import '../widgets/primary_button.dart';
 import '../widgets/rise_in.dart';
 import 'record_form_sheet.dart';
 
-/// Drill-down from the Lifegrid tab: the records of one model. Add via the
+/// Drill-down from the Home tab: the records of one model. Add via the
 /// bottom bar, tap a record to edit, swipe-less × to delete.
 class RecordsPage extends StatefulWidget {
   const RecordsPage({super.key, required this.modelId});
@@ -69,7 +69,7 @@ class _RecordsPageState extends State<RecordsPage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         OverlayHeader(
-                          breadcrumb: 'Lifegrid · Data',
+                          breadcrumb: 'Home · Data',
                           title: model.name,
                           subtitle: plural(model.recordCount, 'record'),
                         ),
@@ -110,7 +110,7 @@ class _RecordsPageState extends State<RecordsPage> {
         glyph: '!',
         title: 'No structure yet',
         message:
-            'This model has no fields. Define its fields in Schemas before adding data.',
+            'This model has no fields. Define its fields in Schema before adding data.',
         action: GhostButton(
           label: 'Define fields ›',
           onPressed: () {

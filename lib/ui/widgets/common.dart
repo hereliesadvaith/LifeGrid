@@ -41,43 +41,26 @@ class CountBadge extends StatelessWidget {
   }
 }
 
-/// Eyebrow + subtitle + count header used at the top of each tab.
-class PageHeader extends StatelessWidget {
-  const PageHeader({
-    super.key,
-    required this.eyebrow,
-    required this.subtitle,
-    required this.count,
-  });
+/// Big Doto page title with an optional count badge (`.page-head`), shown at
+/// the top of each primary page.
+class PageTitleHeader extends StatelessWidget {
+  const PageTitleHeader({super.key, required this.title, this.count});
 
-  final String eyebrow;
-  final String subtitle;
-  final int count;
+  final String title;
+  final int? count;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(0, 22, 0, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(0, 26, 0, 18),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Text('●  ',
-                  style: AppText.mono(size: 11, color: T.accent, weight: FontWeight.w700)),
-              Text(eyebrow.toUpperCase(), style: AppText.eyebrow()),
-            ],
+          Expanded(
+            child: Text(title,
+                style: AppText.display(
+                    size: 34, weight: FontWeight.w700, letterSpacing: 1)),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(subtitle.toUpperCase(),
-                    style: AppText.mono(size: 13, color: T.textDim, letterSpacing: 2)),
-              ),
-              CountBadge(count),
-            ],
-          ),
+          if (count != null) CountBadge(count!),
         ],
       ),
     );

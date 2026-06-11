@@ -88,6 +88,7 @@ class SheetInput extends StatelessWidget {
     this.autofocus = false,
     this.errorText,
     this.onSubmitted,
+    this.onChanged,
     this.readOnly = false,
     this.onTap,
   });
@@ -98,6 +99,7 @@ class SheetInput extends StatelessWidget {
   final bool autofocus;
   final String? errorText;
   final VoidCallback? onSubmitted;
+  final ValueChanged<String>? onChanged;
   final bool readOnly;
   final VoidCallback? onTap;
 
@@ -109,6 +111,7 @@ class SheetInput extends StatelessWidget {
       autofocus: autofocus,
       readOnly: readOnly,
       onTap: onTap,
+      onChanged: onChanged,
       onSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
       style: AppText.mono(size: 15, color: T.text),
       cursorColor: T.accent,

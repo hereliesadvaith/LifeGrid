@@ -15,7 +15,7 @@ import '../widgets/rise_in.dart';
 import '../widgets/sheet.dart';
 import 'add_field_sheet.dart';
 
-/// Drill-down from the Schemas tab: the fields of one model.
+/// Drill-down from the Schema tab: the fields of one model.
 /// When the model has records its schema is locked — add/remove is disabled.
 class FieldsPage extends StatelessWidget {
   const FieldsPage({super.key, required this.modelId});
@@ -52,7 +52,7 @@ class FieldsPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         OverlayHeader(
-                          breadcrumb: 'Schemas · Structure',
+                          breadcrumb: 'Schema · Structure',
                           title: model.name,
                           subtitle: plural(model.fields.length, 'field'),
                         ),

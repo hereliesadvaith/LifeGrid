@@ -1,20 +1,24 @@
 # Lifegrid — Implementation Plan
 
-> Porting the `schema_app.html` prototype to a Flutter app, local-first (no login),
+> Porting the `lifegrid.html` prototype to a Flutter app, local-first (no login),
 > persisted with **raw sqflite**. This is a design/architecture doc — no code yet.
 
 ---
 
 ## 1. What we're building
 
-A personal no-code database. Two tabs:
+A personal no-code database. The app is organized around a **bottom navigation bar**
+(Google-Pay style — icon-only, no labels) with three destinations:
 
-- **Schemas** — define *models* (e.g. `workouts`) and their typed *fields*.
-- **Lifegrid** — pick a model and log *records* into it with a type-aware form.
+- **Home** — pick a model and log *records* into it with a type-aware form. (the data side)
+- **Schema** — define *models* (e.g. `workouts`) and their typed *fields*. (the structure side)
+- **Settings** — an editable profile (photo, first name, last name, email). Local-only for v1.
+
+Both **Home** and **Schema** have a **search bar** at the top to filter the model list by name.
 
 Field types (from the prototype): `STR`, `INT`, `FLOAT`, `DATE`, `BOOL`.
 
-The core insight to preserve: **structure (Schemas) is separate from data (Lifegrid)**,
+The core insight to preserve: **structure (Schema) is separate from data (Home)**,
 and the record form adapts to each field's type.
 
 ---
@@ -99,20 +103,24 @@ lib/
     app_model.dart          # id, name, List<FieldDef>, recordCount
     field_def.dart          # id, name, FieldType, position
     record_entry.dart       # id, Map<fieldId, dynamic> values
+    profile.dart            # firstName, lastName, email, photo path/bytes
   state/
     app_store.dart          # ChangeNotifier wrapping the repository
+    profile_store.dart      # ChangeNotifier for the Settings profile
   ui/
-    home_page.dart          # tabs + PageView (Lifegrid / Schemas)
-    lifegrid/
-      lifegrid_tab.dart     # model list (record counts)
+    home_shell.dart         # Scaffold + bottomNavigationBar + PageView (Home / Schema / Settings)
+    home/
+      home_tab.dart         # search bar + model list (record counts)
       records_page.dart     # drill-down: records for one model
       add_record_sheet.dart # dynamic, type-aware form
-    schemas/
-      schemas_tab.dart      # model list (field type chips)
+    schema/
+      schema_tab.dart       # search bar + model list (field type chips)
       fields_page.dart      # drill-down: fields for one model
       new_model_sheet.dart
       add_field_sheet.dart  # name + type-grid picker
-    widgets/                # shared cards, empty states, primary button, etc.
+    settings/
+      settings_tab.dart     # editable profile: avatar picker + name/email form
+    widgets/                # shared cards, empty states, search bar, primary button, etc.
 ```
 
 ---
@@ -126,8 +134,12 @@ lib/
 | `provider` | lightweight state (optional — could use plain `ValueNotifier`) |
 | `google_fonts` | Doto, Space Grotesk, Space Mono without bundling files |
 | `intl` | date formatting/parsing |
+| `image_picker` | pick a profile photo on the Settings page |
+| `shared_preferences` | persist the Settings profile (name/email + photo path) |
 
-Keeping the dep list intentionally small to match the raw-sqflite spirit.
+Keeping the dep list intentionally small to match the raw-sqflite spirit. The profile is
+small, flat, and unrelated to the model data, so `shared_preferences` is a better fit than a
+SQLite table; the picked photo is copied into the app's documents dir and only its path is stored.
 
 ---
 
@@ -135,7 +147,9 @@ Keeping the dep list intentionally small to match the raw-sqflite spirit.
 
 | Prototype (HTML/CSS/JS) | Flutter |
 |---|---|
-| Swipe pager + animated underline tabs | `PageView` + custom header row with an `AnimatedAlign`/`AnimatedPositioned` underline driven by page offset |
+| Swipe pager + icon-only bottom nav (Home / Schema / Settings) | `PageView` driven by a `BottomNavigationBar` (or a custom bar): `onTap` animates the page, `onPageChanged` updates the selected index. Icon-only items (`showSelectedLabels: false`), accent tint on the active icon. |
+| Search bar atop Home / Schema | A `TextField` (pill-shaped, leading search icon) above each list; filters `models` by name (case-insensitive `contains`). UI-only filter over the in-memory list — see §7.4. |
+| Settings profile (avatar + name/email + Save) | `settings_tab.dart`: a circular avatar (`CircleAvatar`, initials fallback) tapped to launch `image_picker`; `TextField`s for first/last/email; Save writes to `profile_store` → `shared_preferences`. |
 | Record / model cards | Custom `Container` widgets in a `ListView` |
 | Drill-down overlays (slide in from right) | `Navigator.push` with a `SlideTransition` route (matches `translateX(100%)`) |
 | Bottom sheets (new model / add field / add record) | `showModalBottomSheet` (rounded top, scrim) |
@@ -152,12 +166,13 @@ accent `#d71921`, card radius `16`, chip radius `999`, the dotted-grid backgroun
 
 ## 6. Build phases (suggested order)
 
-1. **Foundation** — add deps, port theme tokens + typography, set up the two-tab `PageView` shell.
+1. **Foundation** — add deps, port theme tokens + typography, set up the `home_shell` (`PageView` + icon-only `BottomNavigationBar`) with three pages.
 2. **Data layer** — `database.dart` (open + create tables), `field_type.dart`, `models_repository.dart` with full CRUD. Unit-test the repo against an in-memory DB.
 3. **State** — `app_store.dart` (`ChangeNotifier`) exposing models, fields, records and mutation methods.
-4. **Schemas tab** — model list → new-model sheet → fields overlay → add/remove field sheet → delete model. Enforce the **schema-lock rule** (see §7.2): once a model has ≥1 record, field add/remove/edit is disabled in the UI (controls greyed out with a hint) and rejected in the repository.
-5. **Lifegrid tab** — model list with counts → records overlay → dynamic record form for **both add and edit** (tap a record to edit) → delete record.
-6. **Polish** — empty states, staggered animations, singular/plural labels, edge cases (model with no fields, locked-schema hint, etc.).
+4. **Schema tab** — search bar → model list → new-model sheet → fields overlay → add/remove field sheet → delete model. Enforce the **schema-lock rule** (see §7.2): once a model has ≥1 record, field add/remove/edit is disabled in the UI (controls greyed out with a hint) and rejected in the repository.
+5. **Home tab** — search bar → model list with counts → records overlay → dynamic record form for **both add and edit** (tap a record to edit) → delete record.
+6. **Settings tab** — `profile_store` over `shared_preferences`; avatar picker (`image_picker`, initials fallback), first/last/email fields, Save.
+7. **Polish** — empty states + no-search-results state, staggered animations, singular/plural labels, edge cases (model with no fields, locked-schema hint, etc.).
 
 ---
 
@@ -180,14 +195,21 @@ accent `#d71921`, card radius `16`, chip radius `999`, the dotted-grid backgroun
 3. **Validation — IN.** The record form rejects non-parseable `INT`/`FLOAT`/`DATE` input
    before saving (inline error, save blocked), so stored values stay clean for future
    sorting/aggregation. Empty optional values store `NULL`.
-4. **Sort / filter / search — later.** Not in v1. The schema (esp. the typed-value-column
-   upgrade) is designed to support it without a rewrite.
+4. **Model-name search — IN. Record sort/filter — later.** Home and Schema each have a search
+   bar that filters the *model list* by name (case-insensitive `contains`, UI-only over the
+   in-memory list). Searching/sorting/filtering *within* a model's records is still v1-out; the
+   schema (esp. the typed-value-column upgrade) is designed to support it without a rewrite.
 5. **Reordering — later.** The `position` columns exist so drag-to-reorder can be added
    later; v1 just appends in creation order.
+6. **Settings/profile — local-only.** First name, last name, email and a profile photo,
+   persisted with `shared_preferences` (photo copied into the documents dir, path stored).
+   It's purely cosmetic in v1 — no account, no sync, nothing keys off it. The fields are kept
+   deliberately minimal so the page is a natural home for real account/sync settings later.
 
 ---
 
 ## 8. Out of scope for v1 (deliberately)
 
 Auth/login, cloud sync, export/import, sharing, relations between models, computed/rollup
-fields. All are natural follow-ups; none block a useful first version.
+fields, and per-record search/sort/filter. The Settings profile is local-only and cosmetic
+(no real account yet). All are natural follow-ups; none block a useful first version.

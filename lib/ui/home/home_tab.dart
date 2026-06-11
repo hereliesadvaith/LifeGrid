@@ -9,29 +9,51 @@ import '../widgets/app_card.dart';
 import '../widgets/common.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/rise_in.dart';
+import '../widgets/search_field.dart';
 import 'records_page.dart';
 
-/// Tab 1 — pick a model to log data into. Shows record + field counts.
-class LifegridTab extends StatelessWidget {
-  const LifegridTab({super.key, required this.onGoToSchemas});
+/// Home page — pick a model to log data into. Shows record + field counts and
+/// a search bar that filters the model list by name.
+class HomeTab extends StatefulWidget {
+  const HomeTab({super.key, required this.onGoToSchema});
 
-  final VoidCallback onGoToSchemas;
+  final VoidCallback onGoToSchema;
+
+  @override
+  State<HomeTab> createState() => _HomeTabState();
+}
+
+class _HomeTabState extends State<HomeTab> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
     final models = store.models;
+    final filtered = _query.isEmpty
+        ? models
+        : models
+            .where((m) => m.name.toLowerCase().contains(_query))
+            .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: T.pad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PageHeader(
-            eyebrow: 'Your records',
-            subtitle: 'Pick a model to log data',
-            count: models.length,
-          ),
+          PageTitleHeader(title: 'Records', count: models.length),
+          if (models.isNotEmpty)
+            SearchField(
+              controller: _search,
+              onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+            ),
           Expanded(
             child: store.loading
                 ? const SizedBox.shrink()
@@ -40,21 +62,23 @@ class LifegridTab extends StatelessWidget {
                         glyph: '▢',
                         title: 'Nothing to fill yet',
                         message:
-                            'Create a model in Schemas first, then come back here to start logging data into it.',
+                            'Create a model in Schema first, then come back here to start logging data into it.',
                         action: GhostButton(
-                          label: 'Go to Schemas ›',
-                          onPressed: onGoToSchemas,
+                          label: 'Go to Schema ›',
+                          onPressed: widget.onGoToSchema,
                         ),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.only(top: 4, bottom: 130),
-                        itemCount: models.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) => RiseIn(
-                          index: i,
-                          child: _DataCard(model: models[i]),
-                        ),
-                      ),
+                    : filtered.isEmpty
+                        ? NoResult(_query)
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(top: 4, bottom: 130),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 12),
+                            itemBuilder: (_, i) => RiseIn(
+                              index: i,
+                              child: _DataCard(model: filtered[i]),
+                            ),
+                          ),
           ),
         ],
       ),

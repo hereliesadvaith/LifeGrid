@@ -29,4 +29,5 @@ class T {
 
   // app frame
   static const maxWidth = 430.0;
+  static const navHeight = 66.0;
 }

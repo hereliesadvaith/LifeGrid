@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'state/app_store.dart';
+import 'state/profile_store.dart';
 import 'theme/tokens.dart';
 import 'theme/typography.dart';
-import 'ui/home_page.dart';
+import 'ui/home_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,8 +17,11 @@ class LifegridApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppStore()..load(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AppStore()..load()),
+        ChangeNotifierProvider(create: (_) => ProfileStore()..load()),
+      ],
       child: MaterialApp(
         title: 'Lifegrid',
         debugShowCheckedModeBanner: false,
@@ -31,7 +35,7 @@ class LifegridApp extends StatelessWidget {
           textTheme: TextTheme(bodyMedium: AppText.ui()),
           splashFactory: InkSparkle.splashFactory,
         ),
-        home: const HomePage(),
+        home: const HomeShell(),
       ),
     );
   }

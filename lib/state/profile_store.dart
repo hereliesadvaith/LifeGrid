@@ -1,0 +1,42 @@
+import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../models/profile.dart';
+
+/// Holds the Settings [Profile], persisted in `shared_preferences`. The profile
+/// is small, flat and unrelated to the model data, so prefs is a better fit than
+/// a SQLite table.
+class ProfileStore extends ChangeNotifier {
+  static const _kFirst = 'profile_first';
+  static const _kLast = 'profile_last';
+  static const _kEmail = 'profile_email';
+  static const _kPhoto = 'profile_photo';
+
+  Profile _profile = const Profile();
+  Profile get profile => _profile;
+
+  bool _loading = true;
+  bool get loading => _loading;
+
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    _profile = Profile(
+      firstName: prefs.getString(_kFirst) ?? '',
+      lastName: prefs.getString(_kLast) ?? '',
+      email: prefs.getString(_kEmail) ?? '',
+      photoPath: prefs.getString(_kPhoto) ?? '',
+    );
+    _loading = false;
+    notifyListeners();
+  }
+
+  Future<void> save(Profile profile) async {
+    _profile = profile;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kFirst, profile.firstName);
+    await prefs.setString(_kLast, profile.lastName);
+    await prefs.setString(_kEmail, profile.email);
+    await prefs.setString(_kPhoto, profile.photoPath);
+  }
+}

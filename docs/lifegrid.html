@@ -24,6 +24,7 @@
     --r-chip:999px;
     --pad:20px;
     --sb-h:46px;
+    --nav-h:66px;
     --display:"Doto",monospace;
     --ui:"Space Grotesk",sans-serif;
     --mono:"Space Mono",monospace;
@@ -57,20 +58,6 @@
   .dotrow i.off{background:var(--text-dim);}
   .batt{font-family:var(--mono);font-size:11px;color:var(--text-mid);}
 
-  /* tabs */
-  .tabs{position:relative;display:flex;padding:6px var(--pad) 0;gap:8px;}
-  .tab{
-    flex:0 0 auto;background:none;border:none;cursor:pointer;padding:4px 2px 14px;
-    font-family:var(--display);font-weight:900;font-size:26px;letter-spacing:1.5px;
-    color:var(--text-dim);transition:color .2s ease;margin-right:18px;
-  }
-  .tab.active{color:var(--text);}
-  .tab-underline{
-    position:absolute;left:var(--pad);bottom:0;height:3px;width:46px;border-radius:3px;
-    background:var(--accent);transition:transform .12s linear, width .2s ease;
-  }
-  .tabs::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line-soft);}
-
   /* pager */
   .pager{flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scroll-behavior:smooth;}
   .pager::-webkit-scrollbar{display:none;}
@@ -78,20 +65,28 @@
   .page{min-width:100%;width:100%;scroll-snap-align:start;overflow-y:auto;padding:0 var(--pad);}
   .page::-webkit-scrollbar{display:none;}
 
-  .page-head{padding:22px 0 14px;}
-  .eyebrow{
-    font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;
-    color:var(--text-dim);display:flex;align-items:center;gap:8px;
-  }
-  .eyebrow b{color:var(--accent);font-weight:700;}
+  .page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:26px 0 18px;}
+  .page-title{font-family:var(--display);font-weight:700;font-size:34px;letter-spacing:1px;margin:0;color:var(--text);}
   .page-head .count{
-    font-family:var(--mono);font-size:13px;color:var(--text-mid);font-weight:700;
-    border:1px solid var(--line);border-radius:var(--r-chip);padding:4px 10px;margin-left:auto;
+    font-family:var(--mono);font-size:12px;color:var(--text-mid);font-weight:700;
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:5px 11px;
   }
-  .head-line{display:flex;align-items:center;}
+
+  /* search bar */
+  .searchbar{position:relative;margin:0 0 16px;}
+  .searchbar input{
+    width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-chip);
+    padding:13px 16px 13px 44px;color:var(--text);font-family:var(--ui);font-size:14px;outline:none;
+    transition:border-color .12s;
+  }
+  .searchbar input:focus{border-color:var(--text-mid);}
+  .searchbar input::placeholder{color:var(--text-dim);}
+  .searchbar .sicon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text-dim);display:grid;place-items:center;pointer-events:none;}
+  .searchbar .sicon svg{width:18px;height:18px;}
 
   /* lists + cards */
-  .list{display:flex;flex-direction:column;gap:12px;padding-bottom:130px;}
+  .list{display:flex;flex-direction:column;gap:12px;padding-bottom:150px;}
+  .noresult{font-family:var(--mono);font-size:12px;color:var(--text-dim);text-align:center;padding:30px 0;letter-spacing:1px;}
   .card{
     background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
     padding:18px;cursor:pointer;transition:transform .12s ease, border-color .12s ease;
@@ -132,9 +127,24 @@
     border:1px solid var(--line);border-radius:8px;padding:4px 8px;}
   .kv b{color:var(--text-dim);font-weight:400;}
 
+  /* settings */
+  .settings{display:flex;flex-direction:column;gap:20px;padding-bottom:150px;}
+  .avatar-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:14px 0 6px;}
+  .avatar{width:108px;height:108px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);
+    background-size:cover;background-position:center;display:grid;place-items:center;position:relative;cursor:pointer;}
+  .avatar .ph{font-family:var(--display);font-weight:900;font-size:36px;color:var(--text-dim);}
+  .avatar .cam{position:absolute;right:2px;bottom:2px;width:34px;height:34px;border-radius:50%;background:var(--accent);
+    border:2px solid var(--bg);display:grid;place-items:center;color:#fff;}
+  .avatar .cam svg{width:16px;height:16px;}
+  .editpic{font-family:var(--ui);font-weight:600;font-size:13px;color:var(--text);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:9px 18px;cursor:pointer;transition:transform .12s;}
+  .editpic:active{transform:scale(.97);}
+  .settings .formfield{margin:0;}
+  .settings .save{margin-top:8px;}
+
   /* empty */
   .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;gap:18px;padding:60px 20px 120px;color:var(--text-dim);}
+    text-align:center;gap:18px;padding:60px 20px 140px;color:var(--text-dim);}
   .empty .glyph{width:88px;height:88px;border-radius:24px;border:1px dashed var(--line);display:grid;place-items:center;
     background:radial-gradient(circle, rgba(255,255,255,0.08) 1.3px, transparent 1.6px) 0 0/12px 12px;}
   .empty .glyph span{font-family:var(--display);font-weight:900;font-size:30px;color:var(--text-mid);}
@@ -143,18 +153,32 @@
   .ghostbtn{font-family:var(--ui);font-weight:600;font-size:14px;color:var(--text);background:var(--surface-2);
     border:1px solid var(--line);border-radius:var(--r-chip);padding:12px 20px;cursor:pointer;}
   .ghostbtn:active{transform:scale(.97);}
+  .hidden{display:none!important;}
 
-  /* bottom bar */
-  .bottombar{position:absolute;left:0;right:0;bottom:0;z-index:15;
+  /* action bottom bar (floats above nav / inside overlays) */
+  .bottombar{position:absolute;left:0;right:0;bottom:0;z-index:35;
     padding:16px var(--pad) calc(20px + env(safe-area-inset-bottom));
     background:linear-gradient(to top, var(--bg) 55%, transparent);display:none;flex-direction:column;gap:10px;}
   .bottombar.show{display:flex;}
+  .bottombar.above-nav{bottom:var(--nav-h);padding-bottom:14px;}
   .primary{width:100%;border:none;border-radius:var(--r-chip);background:var(--text);color:#000;cursor:pointer;
     font-family:var(--ui);font-weight:700;font-size:16px;letter-spacing:.3px;
     padding:17px;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform .12s, background .12s;}
   .primary:active{transform:scale(.98);}
   .primary .plus{font-family:var(--mono);font-weight:700;}
   .primary.danger{background:transparent;border:1px solid var(--line);color:var(--accent);}
+
+  /* bottom nav (Google Pay style — icons only) */
+  .navbar{position:absolute;left:0;right:0;bottom:0;z-index:20;height:var(--nav-h);
+    display:flex;align-items:center;justify-content:space-around;
+    padding:0 14px env(safe-area-inset-bottom);
+    background:var(--surface);border-top:1px solid var(--line);}
+  .navbtn{background:none;border:none;cursor:pointer;color:var(--text-dim);
+    display:grid;place-items:center;width:58px;height:44px;border-radius:var(--r-chip);
+    transition:color .15s, background .15s;}
+  .navbtn svg{width:24px;height:24px;display:block;}
+  .navbtn.active{color:var(--accent);background:#160708;}
+  .navbtn:active{transform:scale(.94);}
 
   /* overlay (drill-downs) */
   .overlay{position:absolute;left:0;right:0;top:0;bottom:0;z-index:30;
@@ -233,42 +257,37 @@
       </div>
     </div>
 
-    <!-- tabs -->
-    <div class="tabs">
-      <button class="tab active" data-page="0">Lifegrid</button>
-      <button class="tab" data-page="1">Schemas</button>
-      <div class="tab-underline" id="tab-underline"></div>
-    </div>
-
     <!-- pager -->
     <div class="pager" id="pager">
 
-      <!-- PAGE 0: LIFEGRID (data) -->
-      <section class="page" id="page-lifegrid">
+      <!-- PAGE 0: HOME (data) -->
+      <section class="page" id="page-home">
         <div class="page-head">
-          <div class="eyebrow"><b>&#9679;</b> Your records</div>
-          <div class="head-line">
-            <span class="meta-mono" style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Pick a model to log data</span>
-            <span class="count" id="lg-count">0</span>
-          </div>
+          <h1 class="page-title">Records</h1>
+          <span class="count" id="lg-count">0</span>
+        </div>
+        <div class="searchbar">
+          <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg></span>
+          <input id="lg-search" placeholder="Search models" autocomplete="off" spellcheck="false" />
         </div>
         <div class="list" id="lg-list"></div>
         <div class="empty hidden" id="lg-empty">
           <div class="glyph"><span>&#9633;</span></div>
           <h3>Nothing to fill yet</h3>
-          <p>Create a model in Schemas first, then come back here to start logging data into it.</p>
-          <button class="ghostbtn" id="lg-goto-schemas">Go to Schemas &rsaquo;</button>
+          <p>Create a model in Schema first, then come back here to start logging data into it.</p>
+          <button class="ghostbtn" id="lg-goto-schemas">Go to Schema &rsaquo;</button>
         </div>
       </section>
 
-      <!-- PAGE 1: SCHEMAS (structure) -->
+      <!-- PAGE 1: SCHEMA (structure) -->
       <section class="page" id="page-schemas">
         <div class="page-head">
-          <div class="eyebrow"><b>&#9679;</b> Data structure</div>
-          <div class="head-line">
-            <span class="meta-mono" style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:2px;">Define models and fields</span>
-            <span class="count" id="sc-count">0</span>
-          </div>
+          <h1 class="page-title">Schema</h1>
+          <span class="count" id="sc-count">0</span>
+        </div>
+        <div class="searchbar">
+          <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg></span>
+          <input id="sc-search" placeholder="Search models" autocomplete="off" spellcheck="false" />
         </div>
         <div class="list" id="sc-list"></div>
         <div class="empty hidden" id="sc-empty">
@@ -278,10 +297,40 @@
         </div>
       </section>
 
+      <!-- PAGE 2: SETTINGS -->
+      <section class="page" id="page-settings">
+        <div class="page-head">
+          <h1 class="page-title">Profile</h1>
+        </div>
+        <div class="settings">
+          <div class="avatar-wrap">
+            <div class="avatar" id="avatar">
+              <span class="ph" id="avatar-ph">?</span>
+              <span class="cam"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L8 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
+            </div>
+            <button class="editpic" id="edit-pic">Change photo</button>
+            <input type="file" id="pic-input" accept="image/*" style="display:none" />
+          </div>
+          <div class="formfield">
+            <label class="flabel">First name</label>
+            <input class="dinput" id="set-first" type="text" placeholder="Jane" autocomplete="off" />
+          </div>
+          <div class="formfield">
+            <label class="flabel">Last name</label>
+            <input class="dinput" id="set-last" type="text" placeholder="Doe" autocomplete="off" />
+          </div>
+          <div class="formfield">
+            <label class="flabel">Email</label>
+            <input class="dinput" id="set-email" type="email" inputmode="email" placeholder="jane@example.com" autocomplete="off" />
+          </div>
+          <button class="primary save" id="save-profile">Save profile</button>
+        </div>
+      </section>
+
     </div>
 
-    <!-- bottom bars -->
-    <div class="bottombar" id="bar-schemas">
+    <!-- action bars -->
+    <div class="bottombar above-nav" id="bar-schemas">
       <button class="primary" id="new-model-btn"><span class="plus">+</span> New model</button>
     </div>
     <div class="bottombar" id="bar-records">
@@ -292,12 +341,25 @@
       <button class="primary danger" id="delete-model-btn">Delete model</button>
     </div>
 
-    <!-- OVERLAY: RECORDS (Lifegrid drill-down) -->
+    <!-- bottom nav -->
+    <nav class="navbar" id="navbar">
+      <button class="navbtn active" data-page="0" aria-label="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.4V21h5v-6h4v6h5V9.4"/></svg>
+      </button>
+      <button class="navbtn" data-page="1" aria-label="Schema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+      </button>
+      <button class="navbtn" data-page="2" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4z"/></svg>
+      </button>
+    </nav>
+
+    <!-- OVERLAY: RECORDS (Home drill-down) -->
     <div class="overlay" id="overlay-records">
       <div style="padding:0 var(--pad);">
         <div class="backrow">
           <button class="backbtn" data-close="records">&lsaquo;</button>
-          <span class="meta">Lifegrid &middot; Data</span>
+          <span class="meta">Home &middot; Data</span>
         </div>
         <div class="overlay-title" id="rec-title">model</div>
         <div class="overlay-sub" id="rec-sub">0 records</div>
@@ -308,12 +370,12 @@
       </div>
     </div>
 
-    <!-- OVERLAY: FIELDS (Schemas drill-down) -->
+    <!-- OVERLAY: FIELDS (Schema drill-down) -->
     <div class="overlay" id="overlay-fields">
       <div style="padding:0 var(--pad);">
         <div class="backrow">
           <button class="backbtn" data-close="fields">&lsaquo;</button>
-          <span class="meta">Schemas &middot; Structure</span>
+          <span class="meta">Schema &middot; Structure</span>
         </div>
         <div class="overlay-title" id="fld-title">model</div>
         <div class="overlay-sub" id="fld-sub">0 fields</div>
@@ -387,6 +449,7 @@
 
   var current=null;        // model index for overlays
   var selectedType="STR";
+  var lgQuery="",scQuery="";
   var $=function(id){return document.getElementById(id);};
 
   function esc(s){return String(s).replace(/[&<>"']/g,function(m){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m];});}
@@ -405,7 +468,10 @@
     $("lg-count").textContent=String(models.length).padStart(2,"0");
     if(models.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
     empty.classList.add("hidden");list.classList.remove("hidden");
+    var shown=0;
     models.forEach(function(m,i){
+      if(lgQuery && m.name.toLowerCase().indexOf(lgQuery)===-1)return;
+      shown++;
       var card=document.createElement("div");
       card.className="card";card.style.animationDelay=(i*0.04)+"s";
       card.innerHTML='<div class="row1"><div class="mname">'+esc(m.name)+'</div><div class="arrow">&rsaquo;</div></div>'+
@@ -414,6 +480,7 @@
       card.addEventListener("click",function(){openRecords(i);});
       list.appendChild(card);
     });
+    if(shown===0){list.innerHTML='<div class="noresult">No models match &ldquo;'+esc(lgQuery)+'&rdquo;</div>';}
   }
 
   function renderSchemas(){
@@ -422,21 +489,25 @@
     $("sc-count").textContent=String(models.length).padStart(2,"0");
     if(models.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
     empty.classList.add("hidden");list.classList.remove("hidden");
+    var shown=0;
     models.forEach(function(m,i){
+      if(scQuery && m.name.toLowerCase().indexOf(scQuery)===-1)return;
+      shown++;
       var codes=m.fields.map(function(f){return f.type;}).filter(function(v,k,a){return a.indexOf(v)===k;});
-      var shown=codes.slice(0,4).map(function(c){return '<span class="tdot">'+c+'</span>';}).join("");
+      var shownCodes=codes.slice(0,4).map(function(c){return '<span class="tdot">'+c+'</span>';}).join("");
       var more=codes.length>4?'<span class="tdot more">+'+(codes.length-4)+'</span>':"";
       var card=document.createElement("div");
       card.className="card";card.style.animationDelay=(i*0.04)+"s";
       card.innerHTML='<div class="row1"><div class="mname">'+esc(m.name)+'</div><div class="arrow">&rsaquo;</div></div>'+
         '<div class="row2"><span class="meta-mono">'+m.fields.length+' field'+(m.fields.length===1?"":"s")+'</span>'+
-        '<div class="typedots">'+shown+more+'</div></div>';
+        '<div class="typedots">'+shownCodes+more+'</div></div>';
       card.addEventListener("click",function(){openFields(i);});
       list.appendChild(card);
     });
+    if(shown===0){list.innerHTML='<div class="noresult">No models match &ldquo;'+esc(scQuery)+'&rdquo;</div>';}
   }
 
-  /* ---------- records overlay (Lifegrid) ---------- */
+  /* ---------- records overlay (Home) ---------- */
   function renderRecords(){
     var m=models[current];if(!m)return;
     $("rec-title").textContent=m.name;
@@ -447,7 +518,7 @@
     if(m.fields.length===0){
       list.classList.add("hidden");empty.classList.remove("hidden");
       empty.innerHTML='<div class="glyph"><span>!</span></div><h3>No structure yet</h3>'+
-        '<p>This model has no fields. Define its fields in Schemas before adding data.</p>'+
+        '<p>This model has no fields. Define its fields in Schema before adding data.</p>'+
         '<button class="ghostbtn" id="rec-define">Define fields &rsaquo;</button>';
       $("rec-define").addEventListener("click",function(){closeOverlay("records");setTimeout(function(){openFields(current);},150);});
       $("bar-records").classList.remove("show");
@@ -477,7 +548,7 @@
     });
   }
 
-  /* ---------- fields overlay (Schemas) ---------- */
+  /* ---------- fields overlay (Schema) ---------- */
   function renderFields(){
     var m=models[current];if(!m)return;
     $("fld-title").textContent=m.name;
@@ -514,7 +585,7 @@
   /* ---------- bottom bar control ---------- */
   function hidePagerBars(){$("bar-schemas").classList.remove("show");}
   function updateBars(){
-    // only when no overlay open
+    // only the schema page shows a pager action bar
     var recOpen=$("overlay-records").classList.contains("open");
     var fldOpen=$("overlay-fields").classList.contains("open");
     if(recOpen||fldOpen)return;
@@ -524,19 +595,20 @@
     else{$("bar-schemas").classList.remove("show");}
   }
 
-  /* ---------- pager + tabs ---------- */
-  var pager=$("pager"),underline=$("tab-underline"),tabs=document.querySelectorAll(".tab");
-  function activePage(){return Math.round(pager.scrollLeft/pager.clientWidth);}
-  function syncTabs(){
-    var w=pager.clientWidth||1;
-    var p=pager.scrollLeft/w;            // 0..1
-    underline.style.transform="translateX("+(p*(w-underline.offsetWidth-40))+"px)";
-    var idx=Math.round(p);
-    tabs.forEach(function(t,k){t.classList.toggle("active",k===idx);});
+  /* ---------- pager + bottom nav ---------- */
+  var pager=$("pager"),navbtns=document.querySelectorAll(".navbtn");
+  function activePage(){return Math.round(pager.scrollLeft/(pager.clientWidth||1));}
+  function syncNav(){
+    var idx=activePage();
+    navbtns.forEach(function(b,k){b.classList.toggle("active",k===idx);});
   }
-  pager.addEventListener("scroll",function(){window.requestAnimationFrame(function(){syncTabs();updateBars();});});
-  tabs.forEach(function(t){t.addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth*parseInt(t.dataset.page,10),behavior:"smooth"});});});
+  pager.addEventListener("scroll",function(){window.requestAnimationFrame(function(){syncNav();updateBars();});});
+  navbtns.forEach(function(b){b.addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth*parseInt(b.dataset.page,10),behavior:"smooth"});});});
   $("lg-goto-schemas").addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth,behavior:"smooth"});});
+
+  /* ---------- search ---------- */
+  $("lg-search").addEventListener("input",function(){lgQuery=this.value.trim().toLowerCase();renderLifegrid();});
+  $("sc-search").addEventListener("input",function(){scQuery=this.value.trim().toLowerCase();renderSchemas();});
 
   /* ---------- sheets ---------- */
   function openSheet(n){$("sheet-"+n).classList.add("open");document.querySelector('[data-close-sheet="'+n+'"]').classList.add("open");}
@@ -614,10 +686,46 @@
   $("model-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("create-model-confirm").click();});
   $("field-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("add-field-confirm").click();});
 
-  /* init */
+  /* ---------- settings / profile ---------- */
+  var profile={first:"",last:"",email:"",pic:""};
+  function initials(){
+    var a=(profile.first||"").trim(),b=(profile.last||"").trim();
+    var s=(a?a[0]:"")+(b?b[0]:"");
+    return s?s.toUpperCase():"?";
+  }
+  function applyAvatar(){
+    var av=$("avatar"),ph=$("avatar-ph");
+    if(profile.pic){av.style.backgroundImage="url("+profile.pic+")";ph.style.display="none";}
+    else{av.style.backgroundImage="";ph.style.display="block";ph.textContent=initials();}
+  }
+  function loadProfile(){
+    try{var raw=localStorage.getItem("lifegrid_profile");if(raw)profile=JSON.parse(raw);}catch(e){}
+    $("set-first").value=profile.first||"";
+    $("set-last").value=profile.last||"";
+    $("set-email").value=profile.email||"";
+    applyAvatar();
+  }
+  $("set-first").addEventListener("input",function(){profile.first=this.value;if(!profile.pic)$("avatar-ph").textContent=initials();});
+  $("set-last").addEventListener("input",function(){profile.last=this.value;if(!profile.pic)$("avatar-ph").textContent=initials();});
+  $("set-email").addEventListener("input",function(){profile.email=this.value;});
+  $("avatar").addEventListener("click",function(){$("pic-input").click();});
+  $("edit-pic").addEventListener("click",function(){$("pic-input").click();});
+  $("pic-input").addEventListener("change",function(e){
+    var f=e.target.files&&e.target.files[0];if(!f)return;
+    var r=new FileReader();r.onload=function(ev){profile.pic=ev.target.result;applyAvatar();};r.readAsDataURL(f);
+  });
+  $("save-profile").addEventListener("click",function(){
+    profile.first=$("set-first").value.trim();
+    profile.last=$("set-last").value.trim();
+    profile.email=$("set-email").value.trim();
+    try{localStorage.setItem("lifegrid_profile",JSON.stringify(profile));}catch(e){}
+    var btn=$("save-profile");var t=btn.textContent;btn.textContent="Saved ✓";setTimeout(function(){btn.textContent=t;},1200);
+  });
+
+  /* ---------- init ---------- */
   document.documentElement.style.setProperty("--sb-h",$("statusbar").offsetHeight+"px");
-  renderAll();renderTypeGrid();syncTabs();updateBars();
-  window.addEventListener("resize",function(){syncTabs();document.documentElement.style.setProperty("--sb-h",$("statusbar").offsetHeight+"px");});
+  loadProfile();renderAll();renderTypeGrid();syncNav();updateBars();
+  window.addEventListener("resize",function(){syncNav();document.documentElement.style.setProperty("--sb-h",$("statusbar").offsetHeight+"px");});
 </script>
 </body>
 </html>

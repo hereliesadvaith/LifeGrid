@@ -10,27 +10,49 @@ import '../widgets/chips.dart';
 import '../widgets/common.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/rise_in.dart';
+import '../widgets/search_field.dart';
 import 'fields_page.dart';
 
-/// Tab 2 — the list of models, each showing its field count and type chips.
-class SchemasTab extends StatelessWidget {
-  const SchemasTab({super.key});
+/// Schema page — the list of models, each showing its field count and type
+/// chips, with a search bar that filters the list by name.
+class SchemaTab extends StatefulWidget {
+  const SchemaTab({super.key});
+
+  @override
+  State<SchemaTab> createState() => _SchemaTabState();
+}
+
+class _SchemaTabState extends State<SchemaTab> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
     final models = store.models;
+    final filtered = _query.isEmpty
+        ? models
+        : models
+            .where((m) => m.name.toLowerCase().contains(_query))
+            .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: T.pad),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PageHeader(
-            eyebrow: 'Data structure',
-            subtitle: 'Define models and fields',
-            count: models.length,
-          ),
+          PageTitleHeader(title: 'Schema', count: models.length),
+          if (models.isNotEmpty)
+            SearchField(
+              controller: _search,
+              onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+            ),
           Expanded(
             child: store.loading
                 ? const SizedBox.shrink()
@@ -41,15 +63,17 @@ class SchemasTab extends StatelessWidget {
                         message:
                             'Create your first model to start defining the shape of your data.',
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.only(top: 4, bottom: 130),
-                        itemCount: models.length,
-                        separatorBuilder: (_, _) => const SizedBox(height: 12),
-                        itemBuilder: (_, i) => RiseIn(
-                          index: i,
-                          child: _ModelCard(model: models[i]),
-                        ),
-                      ),
+                    : filtered.isEmpty
+                        ? NoResult(_query)
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(top: 4, bottom: 130),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: 12),
+                            itemBuilder: (_, i) => RiseIn(
+                              index: i,
+                              child: _ModelCard(model: filtered[i]),
+                            ),
+                          ),
           ),
         ],
       ),
