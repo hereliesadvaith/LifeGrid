@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../state/app_store.dart';
 import '../theme/tokens.dart';
+import 'dashboard/dashboard_tab.dart';
 import 'home/home_tab.dart';
 import 'schema/schema_tab.dart';
 import 'schema/new_model_sheet.dart';
@@ -10,9 +11,9 @@ import 'settings/settings_tab.dart';
 import 'widgets/dotted_background.dart';
 import 'widgets/primary_button.dart';
 
-/// Root screen: phone-width frame with a swipeable three-page pager (Home /
-/// Schema / Settings) driven by an icon-only bottom navigation bar. A floating
-/// "New model" bar sits above the nav on the Schema page only.
+/// Root screen: phone-width frame with a swipeable four-page pager (Dashboard /
+/// Record / Schema / Settings) driven by an icon-only bottom navigation bar. A
+/// floating "New model" bar sits above the nav on the Schema page only.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -25,7 +26,8 @@ class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
   static const _navItems = [
-    (icon: Icons.home_outlined, label: 'Home'),
+    (icon: Icons.home_outlined, label: 'Dashboard'),
+    (icon: Icons.shelves, label: 'Record'),
     (icon: Icons.storage_rounded, label: 'Schema'),
     (icon: Icons.settings_outlined, label: 'Settings'),
   ];
@@ -47,7 +49,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
-    final onSchema = _index == 1;
+    final onSchema = _index == 2;
 
     return Scaffold(
       body: DottedBackground(
@@ -65,7 +67,8 @@ class _HomeShellState extends State<HomeShell> {
                           controller: _controller,
                           onPageChanged: (i) => setState(() => _index = i),
                           children: [
-                            HomeTab(onGoToSchema: () => _goTo(1)),
+                            const DashboardTab(),
+                            HomeTab(onGoToSchema: () => _goTo(2)),
                             const SchemaTab(),
                             const SettingsTab(),
                           ],
