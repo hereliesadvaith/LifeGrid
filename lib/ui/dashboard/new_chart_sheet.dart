@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../data/field_type.dart';
 import '../../models/app_model.dart';
 import '../../models/chart_def.dart';
 import '../../models/field_def.dart';
@@ -55,6 +56,25 @@ class _NewChartWizardState extends State<_NewChartWizard> {
   ChartType? _type;
   FieldDef? _groupBy;
   PieStyle _style = PieStyle.donut;
+  bool _useSum = false; // false = count measure, true = sum a numeric field
+  FieldDef? _sumField; // the field summed when _useSum (slices/%/center)
+  FieldDef? _dateField; // optional DATE field to filter by (null = off)
+
+  /// INT/FLOAT fields on the selected model — candidates for the sum measure.
+  List<FieldDef> get _numericFields {
+    final m = _model;
+    if (m == null) return const [];
+    return m.fields
+        .where((f) => f.type == FieldType.int_ || f.type == FieldType.float)
+        .toList();
+  }
+
+  /// DATE fields on the selected model — candidates for the date filter.
+  List<FieldDef> get _dateFields {
+    final m = _model;
+    if (m == null) return const [];
+    return m.fields.where((f) => f.type == FieldType.date).toList();
+  }
 
   @override
   void dispose() {
@@ -64,7 +84,10 @@ class _NewChartWizardState extends State<_NewChartWizard> {
 
   bool get _canNext => _model != null && _type != null;
   bool get _canCreate =>
-      _type == ChartType.pie && _model != null && _groupBy != null;
+      _type == ChartType.pie &&
+      _model != null &&
+      _groupBy != null &&
+      (!_useSum || _sumField != null); // sum needs a chosen field
 
   void _next() {
     if (!_canNext) return;
@@ -81,6 +104,8 @@ class _NewChartWizardState extends State<_NewChartWizard> {
       groupFieldId: _groupBy!.id,
       style: _style,
       title: title.isEmpty ? _model!.name : title,
+      dateFieldId: _dateField?.id,
+      sumFieldId: _useSum ? _sumField?.id : null,
     );
     if (mounted) Navigator.of(context).pop();
   }
@@ -129,7 +154,11 @@ class _NewChartWizardState extends State<_NewChartWizard> {
                 selected: _model?.id == m.id,
                 onTap: () => setState(() {
                   _model = m;
-                  _groupBy = null; // reset field when model changes
+                  // Field availability differs per model — reset all picks.
+                  _groupBy = null;
+                  _useSum = false;
+                  _sumField = null;
+                  _dateField = null;
                 }),
               ),
             )),
@@ -215,6 +244,51 @@ class _NewChartWizardState extends State<_NewChartWizard> {
           ],
         ),
       const SizedBox(height: 22),
+      // Measure: slice sizes, percentages and the center total are by record
+      // count, or by the sum of a chosen numeric field. Sum needs a number
+      // field, so the toggle only appears when the model has one.
+      if (_numericFields.isNotEmpty) ...[
+        const SheetLabel('Measure'),
+        Row(
+          children: [
+            Expanded(
+              child: _SegButton(
+                label: 'Count',
+                selected: !_useSum,
+                onTap: () => setState(() {
+                  _useSum = false;
+                  _sumField = null;
+                }),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _SegButton(
+                label: 'Sum',
+                selected: _useSum,
+                onTap: () => setState(() => _useSum = true),
+              ),
+            ),
+          ],
+        ),
+        if (_useSum) ...[
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 9,
+            runSpacing: 9,
+            children: [
+              for (final f in _numericFields)
+                _SelectChip(
+                  label: f.name,
+                  code: f.type.code,
+                  selected: _sumField?.id == f.id,
+                  onTap: () => setState(() => _sumField = f),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 22),
+      ],
       const SheetLabel('Style'),
       Row(
         children: [
@@ -231,6 +305,30 @@ class _NewChartWizardState extends State<_NewChartWizard> {
         ],
       ),
       const SizedBox(height: 22),
+      // Optional — pick which DATE field to filter the chart by (or Off). The
+      // week/month/year range itself is chosen later, on the chart card.
+      if (_dateFields.isNotEmpty) ...[
+        const SheetLabel('Date filter'),
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          children: [
+            _SelectChip(
+              label: 'Off',
+              selected: _dateField == null,
+              onTap: () => setState(() => _dateField = null),
+            ),
+            for (final f in _dateFields)
+              _SelectChip(
+                label: f.name,
+                code: f.type.code,
+                selected: _dateField?.id == f.id,
+                onTap: () => setState(() => _dateField = f),
+              ),
+          ],
+        ),
+        const SizedBox(height: 22),
+      ],
       const SheetLabel('Title'),
       SheetInput(controller: _title, hint: 'e.g. workouts by exercise'),
       const SizedBox(height: 22),
@@ -453,6 +551,56 @@ class _DimmedButton extends StatelessWidget {
     return Opacity(
       opacity: enabled ? 1 : 0.35,
       child: IgnorePointer(ignoring: !enabled, child: child),
+    );
+  }
+}
+
+/// Generic selectable pill (used for the center-value choice: Count + numeric
+/// fields), styled like [_FieldChip] but with an optional type code.
+class _SelectChip extends StatelessWidget {
+  const _SelectChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.code,
+  });
+
+  final String label;
+  final String? code;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? T.accentSurface : T.surface2,
+          borderRadius: BorderRadius.circular(T.rChip),
+          border: Border.all(color: selected ? T.accent : T.line),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label,
+                style: AppText.mono(
+                    size: 12,
+                    weight: FontWeight.w700,
+                    color: selected ? T.text : T.textMid)),
+            if (code != null) ...[
+              const SizedBox(width: 7),
+              Text(code!,
+                  style: AppText.mono(
+                      size: 9,
+                      color: selected ? T.accent : T.textDim,
+                      letterSpacing: 1)),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

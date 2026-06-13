@@ -230,6 +230,8 @@ class ModelsRepository {
     required int groupFieldId,
     required PieStyle style,
     required String title,
+    int? dateFieldId,
+    int? sumFieldId,
   }) async {
     final db = await _db;
     final posRows = await db
@@ -242,7 +244,15 @@ class ModelsRepository {
       'title': title,
       'position': Sqflite.firstIntValue(posRows) ?? 0,
       'created_at': DateTime.now().millisecondsSinceEpoch,
+      'date_field': dateFieldId,
+      'sum_field': sumFieldId,
     });
+  }
+
+  Future<void> updateChartDateFilter(int chartId, DateFilter filter) async {
+    final db = await _db;
+    await db.update('charts', {'date_filter': filter.code},
+        where: 'id = ?', whereArgs: [chartId]);
   }
 
   Future<void> deleteChart(int chartId) async {

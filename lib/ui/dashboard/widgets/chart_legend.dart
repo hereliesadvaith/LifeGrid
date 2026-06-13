@@ -60,13 +60,11 @@ class _LegendRow extends StatelessWidget {
           Text('${slice.pct}%',
               style: AppText.mono(
                   size: 13, weight: FontWeight.w700, color: T.textMid)),
-          SizedBox(
-            width: 42,
-            child: Text(
-              '${slice.count}',
-              textAlign: TextAlign.right,
-              style: AppText.mono(size: 11, color: T.textDim),
-            ),
+          const SizedBox(width: 10),
+          Text(
+            formatMetric(slice.value),
+            textAlign: TextAlign.right,
+            style: AppText.mono(size: 11, color: T.textDim),
           ),
         ],
       ),

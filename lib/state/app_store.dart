@@ -99,6 +99,8 @@ class AppStore extends ChangeNotifier {
     required int groupFieldId,
     required PieStyle style,
     required String title,
+    int? dateFieldId,
+    int? sumFieldId,
   }) async {
     await _repo.createChart(
       modelId: modelId,
@@ -106,7 +108,14 @@ class AppStore extends ChangeNotifier {
       groupFieldId: groupFieldId,
       style: style,
       title: title,
+      dateFieldId: dateFieldId,
+      sumFieldId: sumFieldId,
     );
+    await load();
+  }
+
+  Future<void> updateChartDateFilter(int chartId, DateFilter filter) async {
+    await _repo.updateChartDateFilter(chartId, filter);
     await load();
   }
 

@@ -38,6 +38,22 @@ enum PieStyle {
       PieStyle.values.firstWhere((s) => s.code == code, orElse: () => donut);
 }
 
+/// Date range a chart is filtered to, available only when its model has a DATE
+/// field. Defaults to the current week (a null stored value resolves to [week]).
+enum DateFilter {
+  week('week', 'Week'),
+  month('month', 'Month'),
+  year('year', 'Year');
+
+  const DateFilter(this.code, this.label);
+
+  final String code;
+  final String label;
+
+  static DateFilter fromCode(String? code) =>
+      DateFilter.values.firstWhere((d) => d.code == code, orElse: () => week);
+}
+
 /// A saved chart on the Dashboard — a descriptor over an existing model. It does
 /// not copy data; the slices are recomputed from the model's records on render.
 ///
@@ -52,6 +68,9 @@ class ChartDef {
     required this.style,
     required this.title,
     required this.position,
+    required this.dateFieldId,
+    required this.dateFilter,
+    required this.sumFieldId,
   });
 
   final int id;
@@ -65,6 +84,18 @@ class ChartDef {
   final String title;
   final int position;
 
+  /// Optional INT/FLOAT field summed in the donut center. Null = show the
+  /// record count (the default).
+  final int? sumFieldId;
+
+  /// The DATE field this chart filters on, chosen via the wizard checkmark.
+  /// Null means the date filter is off (it's optional).
+  final int? dateFieldId;
+
+  /// The saved date range, applied only when [dateFieldId] is set; resolves to
+  /// [DateFilter.week] when never explicitly chosen.
+  final DateFilter dateFilter;
+
   factory ChartDef.fromMap(Map<String, Object?> m) => ChartDef(
         id: m['id'] as int,
         modelId: m['model_id'] as int,
@@ -73,5 +104,8 @@ class ChartDef {
         style: PieStyle.fromCode(m['style'] as String?),
         title: m['title'] as String,
         position: m['position'] as int,
+        dateFieldId: m['date_field'] as int?,
+        dateFilter: DateFilter.fromCode(m['date_filter'] as String?),
+        sumFieldId: m['sum_field'] as int?,
       );
 }

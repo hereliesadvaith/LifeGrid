@@ -19,7 +19,7 @@ class AppDatabase {
     final path = p.join(dir.path, 'lifegrid.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -73,6 +73,15 @@ class AppDatabase {
     if (oldVersion < 2) {
       await _createCharts(db);
     }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE charts ADD COLUMN date_filter TEXT');
+    }
+    if (oldVersion < 4) {
+      await db.execute('ALTER TABLE charts ADD COLUMN date_field INTEGER');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE charts ADD COLUMN sum_field INTEGER');
+    }
   }
 
   /// Dashboard charts — descriptors over an existing model (see plan §2).
@@ -88,7 +97,10 @@ class AppDatabase {
         style       TEXT,
         title       TEXT    NOT NULL,
         position    INTEGER NOT NULL,
-        created_at  INTEGER NOT NULL
+        created_at  INTEGER NOT NULL,
+        date_filter TEXT,
+        date_field  INTEGER REFERENCES fields(id) ON DELETE SET NULL,
+        sum_field   INTEGER REFERENCES fields(id) ON DELETE SET NULL
       )
     ''');
     await db.execute('CREATE INDEX idx_charts_model ON charts(model_id)');

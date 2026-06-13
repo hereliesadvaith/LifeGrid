@@ -54,6 +54,27 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+  # Generates platform launcher icons from assets/icon/ (run with:
+  # `dart run flutter_launcher_icons`).
+  flutter_launcher_icons: ^0.14.4
+
+# App launcher icon config — the Lifegrid "lg" mark.
+flutter_launcher_icons:
+  image_path: "assets/icon/lifegrid.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+  windows:
+    generate: true
+  macos:
+    generate: true
+  # Android adaptive icon: white background + padded foreground so launcher
+  # masks don't crop the mark.
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/icon/lifegrid_foreground.png"
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

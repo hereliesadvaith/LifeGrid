@@ -27,7 +27,7 @@ class DonutPainter extends CustomPainter {
       final stroke = outer * 0.34;
       final rect = Rect.fromCircle(center: center, radius: outer - stroke / 2 - 1);
       for (final s in data.slices) {
-        final sweep = s.count / data.total * 2 * math.pi;
+        final sweep = s.value / data.total * 2 * math.pi;
         final g = multi ? _gap : 0.0;
         final paint = Paint()
           ..style = PaintingStyle.stroke
@@ -40,7 +40,7 @@ class DonutPainter extends CustomPainter {
     } else {
       final rect = Rect.fromCircle(center: center, radius: outer - 1);
       for (final s in data.slices) {
-        final sweep = s.count / data.total * 2 * math.pi;
+        final sweep = s.value / data.total * 2 * math.pi;
         final g = multi ? _gap : 0.0;
         final paint = Paint()
           ..style = PaintingStyle.fill
