@@ -31,3 +31,16 @@ class T {
   static const maxWidth = 430.0;
   static const navHeight = 66.0;
 }
+
+/// Chart slice palette ported from the prototype (`PALETTE`): accent red leads,
+/// then white → greys. Cycled when a chart has more slices than colors.
+const kChartPalette = [
+  Color(0xFFD71921),
+  Color(0xFFFFFFFF),
+  Color(0xFF9A9A9A),
+  Color(0xFF5E5E5E),
+  Color(0xFFC98A8D),
+  Color(0xFF3A3A3A),
+  Color(0xFFE8E8E8),
+  Color(0xFF7A7A7A),
+];

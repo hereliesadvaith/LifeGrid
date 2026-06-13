@@ -1,215 +1,242 @@
-# Lifegrid — Implementation Plan
+# Lifegrid — Dashboard & Charts Implementation Plan
 
-> Porting the `lifegrid.html` prototype to a Flutter app, local-first (no login),
-> persisted with **raw sqflite**. This is a design/architecture doc — no code yet.
-
----
-
-## 1. What we're building
-
-A personal no-code database. The app is organized around a **bottom navigation bar**
-(Google-Pay style — icon-only, no labels) with three destinations:
-
-- **Home** — pick a model and log *records* into it with a type-aware form. (the data side)
-- **Schema** — define *models* (e.g. `workouts`) and their typed *fields*. (the structure side)
-- **Settings** — an editable profile (photo, first name, last name, email). Local-only for v1.
-
-Both **Home** and **Schema** have a **search bar** at the top to filter the model list by name.
-
-Field types (from the prototype): `STR`, `INT`, `FLOAT`, `DATE`, `BOOL`.
-
-The core insight to preserve: **structure (Schema) is separate from data (Home)**,
-and the record form adapts to each field's type.
+> Porting the **Dashboard** additions from the `lifegrid.html` prototype to Flutter.
+> Scope is *only* these updates: a Dashboard tab that holds user-created **charts**,
+> a two-step "New chart" wizard, and a **pie/donut** chart (with bar/line stubbed for later).
+> The base app (Home / Schema / Settings, sqflite, theme) already exists — this builds on it.
 
 ---
 
-## 2. The key decision: how to store a dynamic schema in SQLite
+## 1. What we're adding
 
-The user defines tables at runtime, so we can't hardcode columns. Two strategies:
+A fourth destination, **Dashboard** (first tab, index 0), that visualizes existing record
+data as charts. The user composes a chart from data they already have:
 
-| Strategy | Idea | Verdict |
-|---|---|---|
-| **A. Dynamic DDL** | `CREATE TABLE` per model, `ALTER TABLE ADD COLUMN` per field | ❌ Fragile: SQLite can't easily drop/retype columns, user names need sanitizing (injection risk), migrations get ugly. |
-| **B. Metadata + EAV** (recommended) | Fixed set of tables that *describe* the user's models and store values as rows | ✅ Safe, flexible, schema changes are just row inserts/deletes. |
+- **Dashboard tab** — a list of chart cards; empty state when none. A floating `+ New chart`
+  button (above the nav, like Schema's `+ New model`).
+- **New chart wizard** — a bottom sheet with **two steps**:
+  - **Step 1** — pick a **model** and a **chart type** (Pie live; Bar/Line shown as `SOON`).
+    "Next" is disabled until both are chosen.
+  - **Step 2** — model & type are now fixed (shown as a context subtitle, not re-pickable).
+    Only the **type-specific config** appears: *group-by field*, *style*, *title*.
+- **Pie/donut chart** — slices = distinct values of the group-by field, sized by record count.
 
-We go with **B**. Proposed tables:
+The key extensibility goal: **adding bar/line later touches only a registry entry + two
+branches** (config builder + renderer), nothing structural.
+
+---
+
+## 2. Chart definition — the data we persist
+
+A chart is a small descriptor over an existing model. It does **not** copy data; it's
+recomputed from records on every render.
+
+```dart
+// models/chart_def.dart
+enum ChartType { pie, bar, line }      // bar/line declared now, unimplemented
+
+enum PieStyle { donut, pie }
+
+class ChartDef {
+  final int id;
+  final int modelId;        // FK -> models.id  (reference by id, NOT list index)
+  final ChartType type;
+  final int groupByFieldId; // FK -> fields.id
+  final PieStyle style;     // pie-specific; ignored by other types for now
+  final String title;
+  final int position;       // for future reordering, mirrors models/fields
+}
+```
+
+> **Why store `modelId`/`groupByFieldId`, not names or list indices.** The prototype kept a
+> live object reference; in Flutter+sqflite the durable key is the row id. A chart can outlive
+> a renamed field, and must degrade gracefully if its model/field was deleted (see §6).
+
+### Persistence (sqflite)
+
+One new table, same EAV spirit as the rest of the schema:
 
 ```sql
-PRAGMA foreign_keys = ON;
-
-CREATE TABLE models (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  name       TEXT    NOT NULL,
-  position   INTEGER NOT NULL,
-  created_at INTEGER NOT NULL          -- epoch millis
+CREATE TABLE charts (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  model_id      INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+  type          TEXT    NOT NULL,          -- 'pie' | 'bar' | 'line'
+  group_field   INTEGER REFERENCES fields(id) ON DELETE SET NULL,
+  style         TEXT,                       -- 'donut' | 'pie' (pie only)
+  title         TEXT    NOT NULL,
+  position      INTEGER NOT NULL,
+  created_at    INTEGER NOT NULL
 );
-
-CREATE TABLE fields (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  model_id   INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
-  name       TEXT    NOT NULL,
-  type       TEXT    NOT NULL,          -- 'STR' | 'INT' | 'FLOAT' | 'DATE' | 'BOOL'
-  position   INTEGER NOT NULL
-);
-
-CREATE TABLE records (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  model_id   INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
-);
-
-CREATE TABLE field_values (        -- named `field_values`: `values` is a SQL reserved word
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  record_id  INTEGER NOT NULL REFERENCES records(id) ON DELETE CASCADE,
-  field_id   INTEGER NOT NULL REFERENCES fields(id)  ON DELETE CASCADE,
-  value      TEXT                       -- canonical string form, NULL if empty
-);
-
-CREATE INDEX idx_fields_model  ON fields(model_id);
-CREATE INDEX idx_records_model ON records(model_id);
-CREATE INDEX idx_values_record ON values(record_id);
-CREATE INDEX idx_values_field  ON values(field_id);
+CREATE INDEX idx_charts_model ON charts(model_id);
 ```
 
-**Value encoding** (single `TEXT` column, cast in Dart on read):
-- `STR` → as-is
-- `INT` / `FLOAT` → number as string (`"100.5"`); sort in SQL with `CAST(value AS REAL)`
-- `DATE` → ISO `YYYY-MM-DD`
-- `BOOL` → `"0"` / `"1"`
-- empty/unset → store `NULL` (the prototype stored `""`; `NULL` is cleaner for sorting/filtering)
-
-> Upgrade path if/when sort & filter get heavy: split `value` into typed columns
-> (`value_num REAL`, `value_text TEXT`, `value_date TEXT`). Single column is fine for v1.
-
-`ON DELETE CASCADE` everywhere means deleting a model wipes its fields, records, and
-values automatically — and removing a field cleans up its orphaned values.
+- `ON DELETE CASCADE` on `model_id` — deleting a model removes its charts automatically.
+- `group_field … ON DELETE SET NULL` — schema-lock means fields rarely vanish under a chart,
+  but if it happens the chart survives and shows an "invalid field" note instead of crashing.
+- Bump the DB version and add a migration that `CREATE TABLE charts` on upgrade.
 
 ---
 
-## 3. Project structure
+## 3. Computing slices (the only real logic)
 
+Pure function, no UI — easy to unit-test. Mirrors `computeSlices` in the prototype.
+
+```dart
+// data/chart_data.dart
+class Slice { final String label; final int count; double pct; Color color; }
+class ChartData { final List<Slice> slices; final int total; }
+
+ChartData computePieData(AppModel model, FieldDef groupBy) {
+  // tally records by the group-by value
+  final counts = <String, int>{};
+  for (final rec in model.records) {
+    final v = rec.values[groupBy.id];
+    final key = switch (groupBy.type) {
+      _ when v == null || v == '' => '—',          // uncategorized
+      FieldType.bool_            => (v == true || v == '1') ? 'true' : 'false',
+      _                          => v.toString(),
+    };
+    counts.update(key, (n) => n + 1, ifAbsent: () => 1);
+  }
+  // sort desc by count, assign palette colors + percentages
+  final slices = counts.entries
+      .map((e) => Slice(label: e.key, count: e.value))
+      .toList()..sort((a, b) => b.count.compareTo(a.count));
+  final total = slices.fold(0, (s, x) => s + x.count);
+  for (var i = 0; i < slices.length; i++) {
+    slices[i].color = kChartPalette[i % kChartPalette.length];
+    slices[i].pct   = total == 0 ? 0 : (slices[i].count / total * 100).round();
+  }
+  return ChartData(slices, total);
+}
 ```
-lib/
-  main.dart                 # app entry, theme, root PageView
-  theme/
-    tokens.dart             # colors, radii, spacing from CSS :root vars
-    typography.dart         # Doto / Space Grotesk / Space Mono text styles
-  data/
-    database.dart           # sqflite open + schema creation + migrations
-    field_type.dart         # FieldType enum + parse/encode/format helpers
-    models_repository.dart   # CRUD: models, fields, records, values
-  models/                   # plain Dart domain objects
-    app_model.dart          # id, name, List<FieldDef>, recordCount
-    field_def.dart          # id, name, FieldType, position
-    record_entry.dart       # id, Map<fieldId, dynamic> values
-    profile.dart            # firstName, lastName, email, photo path/bytes
-  state/
-    app_store.dart          # ChangeNotifier wrapping the repository
-    profile_store.dart      # ChangeNotifier for the Settings profile
-  ui/
-    home_shell.dart         # Scaffold + bottomNavigationBar + PageView (Home / Schema / Settings)
-    home/
-      home_tab.dart         # search bar + model list (record counts)
-      records_page.dart     # drill-down: records for one model
-      add_record_sheet.dart # dynamic, type-aware form
-    schema/
-      schema_tab.dart       # search bar + model list (field type chips)
-      fields_page.dart      # drill-down: fields for one model
-      new_model_sheet.dart
-      add_field_sheet.dart  # name + type-grid picker
-    settings/
-      settings_tab.dart     # editable profile: avatar picker + name/email form
-    widgets/                # shared cards, empty states, search bar, primary button, etc.
+
+**Palette** — port verbatim from the prototype (`PALETTE`): accent red leads, then
+white → greys. Put it in `theme/tokens.dart`:
+
+```dart
+const kChartPalette = [
+  Color(0xFFD71921), Color(0xFFFFFFFF), Color(0xFF9A9A9A), Color(0xFF5E5E5E),
+  Color(0xFFC98A8D), Color(0xFF3A3A3A), Color(0xFFE8E8E8), Color(0xFF7A7A7A),
+];
 ```
 
 ---
 
-## 4. Dependencies
+## 4. Drawing the pie/donut — `CustomPainter` (no chart package)
 
-| Package | Why |
-|---|---|
-| `sqflite` | local SQLite (chosen) |
-| `path` / `path_provider` | resolve the DB file location |
-| `provider` | lightweight state (optional — could use plain `ValueNotifier`) |
-| `google_fonts` | Doto, Space Grotesk, Space Mono without bundling files |
-| `intl` | date formatting/parsing |
-| `image_picker` | pick a profile photo on the Settings page |
-| `shared_preferences` | persist the Settings profile (name/email + photo path) |
+Keeps the small-deps spirit. Matches the prototype's geometry (188×188, donut ring vs full
+pie, 3px gaps, total in the donut hole).
 
-Keeping the dep list intentionally small to match the raw-sqflite spirit. The profile is
-small, flat, and unrelated to the model data, so `shared_preferences` is a better fit than a
-SQLite table; the picked photo is copied into the app's documents dir and only its path is stored.
+```dart
+// ui/dashboard/widgets/donut_painter.dart
+class DonutPainter extends CustomPainter {
+  final ChartData data;
+  final bool donut;          // true = ring + center total, false = filled pie
+  // For each slice: sweep = fraction * 2π, minus a tiny gap; start at -π/2 (12 o'clock).
+  // donut -> strokeWidth ~34 on r≈70; pie -> a filled wedge to center (Path.arcTo + lineTo).
+}
+```
 
----
+- **Donut:** `Canvas.drawArc(rect, start, sweep, false, strokePaint)` with
+  `strokeCap = StrokeCap.butt`, one paint per slice color, a 3px angular gap between slices.
+  Paint the total count + "RECORDS" in the hole with a `Text`/`TextPainter` (Doto font).
+- **Pie:** same sweeps but `drawArc(..., true, fillPaint)` (wedges to center), no hole text.
+- Wrap in an `AspectRatio(1)` / `SizedBox(188)` centered in the card.
 
-## 5. Mapping the prototype → Flutter
-
-| Prototype (HTML/CSS/JS) | Flutter |
-|---|---|
-| Swipe pager + icon-only bottom nav (Home / Schema / Settings) | `PageView` driven by a `BottomNavigationBar` (or a custom bar): `onTap` animates the page, `onPageChanged` updates the selected index. Icon-only items (`showSelectedLabels: false`), accent tint on the active icon. |
-| Search bar atop Home / Schema | A `TextField` (pill-shaped, leading search icon) above each list; filters `models` by name (case-insensitive `contains`). UI-only filter over the in-memory list — see §7.4. |
-| Settings profile (avatar + name/email + Save) | `settings_tab.dart`: a circular avatar (`CircleAvatar`, initials fallback) tapped to launch `image_picker`; `TextField`s for first/last/email; Save writes to `profile_store` → `shared_preferences`. |
-| Record / model cards | Custom `Container` widgets in a `ListView` |
-| Drill-down overlays (slide in from right) | `Navigator.push` with a `SlideTransition` route (matches `translateX(100%)`) |
-| Bottom sheets (new model / add field / add record) | `showModalBottomSheet` (rounded top, scrim) |
-| Type grid selection | Selectable cards via `StatefulWidget` / `ToggleButtons`-style custom grid |
-| Dynamic record form (add **and edit**) | Build a column of fields from `model.fields`; per type: `TextFormField` (`keyboardType` numeric/decimal), date picker (`showDatePicker`), `Switch` for BOOL. Same widget pre-filled from an existing record = edit mode. |
-| Tapping a record | Opens the record in the form view, pre-filled, in edit mode (Save updates, bumps `updated_at`) |
-| `rise` keyframe / `:active` scale | `AnimatedOpacity` + staggered delays; `AnimatedScale` or `InkWell` feedback |
-| CSS design tokens (`:root`) | `theme/tokens.dart` constants + `ThemeData` |
-
-Design tokens to carry over verbatim: bg `#000`, surface `#0c0c0c`, line `#262626`,
-accent `#d71921`, card radius `16`, chip radius `999`, the dotted-grid background.
+**Legend** is plain widgets, not painted: a `Column` of rows
+`[colored dot] name … pct% … count`, mono font, hairline dividers — straight port of
+`buildLegend`.
 
 ---
 
-## 6. Build phases (suggested order)
+## 5. UI structure
 
-1. **Foundation** — add deps, port theme tokens + typography, set up the `home_shell` (`PageView` + icon-only `BottomNavigationBar`) with three pages.
-2. **Data layer** — `database.dart` (open + create tables), `field_type.dart`, `models_repository.dart` with full CRUD. Unit-test the repo against an in-memory DB.
-3. **State** — `app_store.dart` (`ChangeNotifier`) exposing models, fields, records and mutation methods.
-4. **Schema tab** — search bar → model list → new-model sheet → fields overlay → add/remove field sheet → delete model. Enforce the **schema-lock rule** (see §7.2): once a model has ≥1 record, field add/remove/edit is disabled in the UI (controls greyed out with a hint) and rejected in the repository.
-5. **Home tab** — search bar → model list with counts → records overlay → dynamic record form for **both add and edit** (tap a record to edit) → delete record.
-6. **Settings tab** — `profile_store` over `shared_preferences`; avatar picker (`image_picker`, initials fallback), first/last/email fields, Save.
-7. **Polish** — empty states + no-search-results state, staggered animations, singular/plural labels, edge cases (model with no fields, locked-schema hint, etc.).
+```
+lib/ui/dashboard/
+  dashboard_tab.dart            # list of ChartCard + empty state + "+ New chart" bar
+  widgets/
+    chart_card.dart             # header (title/subtitle/delete) + body switch on type
+    donut_painter.dart          # CustomPainter (pie/donut)
+    chart_legend.dart           # legend rows
+  new_chart_sheet.dart          # the 2-step wizard (PageView or step-index state)
+```
 
----
+### Dashboard tab
+- `PageTitleHeader('Dashboard')` (reuse existing widget) + a count chip.
+- `ListView` of `ChartCard`s, or the empty state (`◔` glyph, "No charts yet…").
+- The `+ New chart` action lives in `home_shell`'s bottom-bar area, shown only when the
+  Dashboard page is active — mirror how the Schema page toggles its `+ New model` bar.
 
-## 7. Decisions (resolved)
+### ChartCard
+- Header: title, subtitle `model · type · by field`, a `×` delete (confirm → repo delete).
+- Body switches on `chart.type`:
+  - `pie` → `computePieData` then `DonutPainter` + `ChartLegend`
+    (or a "No records yet" note when `total == 0`).
+  - `bar`/`line` → a "coming soon" placeholder.
+  - model/field missing → "This model was deleted." / "Field no longer exists."
 
-1. **Editing — IN.** Records are editable via a **form view**: tapping a record opens the
-   same dynamic form used for "add", pre-filled with its current values; saving updates the
-   row and bumps `updated_at`. Field names are also editable while the schema is unlocked
-   (see below).
-2. **Schema lock — strict.** A model's schema (its fields) can only be changed **while it has
-   zero records**. The moment a model has ≥1 record, adding/removing/renaming/retyping fields
-   is forbidden. This is enforced in **two places**:
-   - **UI** — field add/remove/edit controls are disabled with a short hint
-     ("Schema is locked — delete all records to change fields").
-   - **Repository** — mutation methods check `recordCount == 0` and throw otherwise, so the
-     rule can't be bypassed.
+### New chart wizard (two steps)
+Hold `step` (1|2) + draft selections in a `StatefulWidget` (or a small `ChangeNotifier`).
+A `PageView` with physics disabled, or just conditional widgets keyed on `step`.
 
-   This rule deletes the entire "what happens to existing data on schema change" problem:
-   structure is frozen before any data depends on it.
-3. **Validation — IN.** The record form rejects non-parseable `INT`/`FLOAT`/`DATE` input
-   before saving (inline error, save blocked), so stored values stay clean for future
-   sorting/aggregation. Empty optional values store `NULL`.
-4. **Model-name search — IN. Record sort/filter — later.** Home and Schema each have a search
-   bar that filters the *model list* by name (case-insensitive `contains`, UI-only over the
-   in-memory list). Searching/sorting/filtering *within* a model's records is still v1-out; the
-   schema (esp. the typed-value-column upgrade) is designed to support it without a rewrite.
-5. **Reordering — later.** The `position` columns exist so drag-to-reorder can be added
-   later; v1 just appends in creation order.
-6. **Settings/profile — local-only.** First name, last name, email and a profile photo,
-   persisted with `shared_preferences` (photo copied into the documents dir, path stored).
-   It's purely cosmetic in v1 — no account, no sync, nothing keys off it. The fields are kept
-   deliberately minimal so the page is a natural home for real account/sync settings later.
+- **Step 1**
+  - Model list → selectable cards (`models` from the store; show rec/field counts).
+  - Chart-type grid from the registry (§7); `SOON` types are disabled/greyed.
+  - `Next` button `enabled: model != null && type != null`.
+- **Step 2**
+  - Back button → `step = 1`; subtitle shows `model.name · typeLabel`.
+  - **Config built by type** (§7): pie → group-by field chips + Donut/Pie segmented toggle +
+    title field (defaults to model name).
+  - `Create chart` → build `ChartDef`, persist via repo, refresh dashboard, close sheet.
 
 ---
 
-## 8. Out of scope for v1 (deliberately)
+## 6. Edge cases (match the prototype)
 
-Auth/login, cloud sync, export/import, sharing, relations between models, computed/rollup
-fields, and per-record search/sort/filter. The Settings profile is local-only and cosmetic
-(no real account yet). All are natural follow-ups; none block a useful first version.
+- **No models** → Step 1 model area shows "No models yet — create one in Schema first."
+- **Model with no fields** → Step 2 group-by shows "This model has no fields…".
+- **Model with 0 records** → card renders the header + "No records to chart yet."
+- **Model deleted after chart created** → `CASCADE` removes the chart row; in-memory list
+  drops it on next load. (If you cache charts in the store, prune on model delete.)
+- **Group-by field deleted** → `SET NULL`; card shows an "invalid field" note, offers delete.
+
+---
+
+## 7. Extensibility — adding Bar / Line later
+
+Three localized touch-points, nothing else:
+
+1. **Registry** — flip `soon: false` for the type (the Flutter equivalent of `CHART_TYPES`):
+   ```dart
+   const kChartTypes = [
+     (key: ChartType.pie,  code: 'PIE',  label: 'Pie / donut', soon: false),
+     (key: ChartType.bar,  code: 'BAR',  label: 'Bar',         soon: true ),
+     (key: ChartType.line, code: 'LINE', label: 'Line',        soon: true ),
+   ];
+   ```
+2. **Config builder** — add a branch in the step-2 builder that renders that type's controls
+   (e.g. bar might add an *aggregate* picker: count vs. sum-of-numeric-field).
+3. **Renderer** — add a branch in `ChartCard` (and a new painter, e.g. `BarPainter`).
+
+`ChartDef` already carries `type`; persistence already stores it. No schema/UI plumbing
+changes — that's the whole point of the two-step split (generic step 1, type-specific step 2).
+
+---
+
+## 8. Build order
+
+1. **Schema** — `charts` table + DB version bump + migration; `ChartDef` model.
+2. **Repo/state** — chart CRUD in the repository; expose `charts` + mutations on `app_store`.
+3. **Compute + paint** — `computePieData`, `DonutPainter`, `ChartLegend` (unit-test compute).
+4. **Dashboard tab** — list/empty state + wire the `+ New chart` bar in `home_shell`.
+5. **Wizard** — two-step sheet (step 1 model+type, step 2 pie config) → create + persist.
+6. **Polish** — edge-case notes, staggered card animation, delete confirm.
+
+---
+
+## 9. Out of scope (for these updates)
+
+Bar/line rendering, per-slice tap/drill-down, sum/avg aggregates (count only for now),
+chart reordering (column exists), and editing an existing chart (delete + recreate for v1).
+All are natural follow-ups enabled by the structure above.

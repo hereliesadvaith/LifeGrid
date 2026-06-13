@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../data/field_type.dart';
 import '../data/models_repository.dart';
 import '../models/app_model.dart';
+import '../models/chart_def.dart';
 import '../models/field_def.dart';
 import '../models/record_entry.dart';
 
@@ -17,11 +18,15 @@ class AppStore extends ChangeNotifier {
   List<AppModel> _models = [];
   List<AppModel> get models => _models;
 
+  List<ChartDef> _charts = [];
+  List<ChartDef> get charts => _charts;
+
   bool _loading = true;
   bool get loading => _loading;
 
   Future<void> load() async {
     _models = await _repo.loadModels();
+    _charts = await _repo.loadCharts();
     _loading = false;
     notifyListeners();
   }
@@ -85,5 +90,28 @@ class AppStore extends ChangeNotifier {
   Future<void> deleteRecord(int recordId) async {
     await _repo.deleteRecord(recordId);
     await load(); // refresh counts / lock state
+  }
+
+  // --- charts ---
+  Future<void> createChart({
+    required int modelId,
+    required ChartType type,
+    required int groupFieldId,
+    required PieStyle style,
+    required String title,
+  }) async {
+    await _repo.createChart(
+      modelId: modelId,
+      type: type,
+      groupFieldId: groupFieldId,
+      style: style,
+      title: title,
+    );
+    await load();
+  }
+
+  Future<void> deleteChart(int chartId) async {
+    await _repo.deleteChart(chartId);
+    await load();
   }
 }

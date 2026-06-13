@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 
 import '../models/app_model.dart';
+import '../models/chart_def.dart';
 import '../models/field_def.dart';
 import '../models/record_entry.dart';
 import 'database.dart';
@@ -213,5 +214,39 @@ class ModelsRepository {
         'value': encoded,
       });
     }
+  }
+
+  // ---------------------------------------------------------------- charts ---
+
+  Future<List<ChartDef>> loadCharts() async {
+    final db = await _db;
+    final rows = await db.query('charts', orderBy: 'position ASC, id ASC');
+    return rows.map(ChartDef.fromMap).toList();
+  }
+
+  Future<int> createChart({
+    required int modelId,
+    required ChartType type,
+    required int groupFieldId,
+    required PieStyle style,
+    required String title,
+  }) async {
+    final db = await _db;
+    final posRows = await db
+        .rawQuery('SELECT COALESCE(MAX(position), -1) + 1 AS p FROM charts');
+    return db.insert('charts', {
+      'model_id': modelId,
+      'type': type.code,
+      'group_field': groupFieldId,
+      'style': style.code,
+      'title': title,
+      'position': Sqflite.firstIntValue(posRows) ?? 0,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
+  Future<void> deleteChart(int chartId) async {
+    final db = await _db;
+    await db.delete('charts', where: 'id = ?', whereArgs: [chartId]);
   }
 }

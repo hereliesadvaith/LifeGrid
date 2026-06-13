@@ -242,6 +242,66 @@
   .toggle .knob{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .15s;}
   .toggle.on .knob{transform:translateX(20px);}
 
+  /* dashboard / charts */
+  .charts{display:flex;flex-direction:column;gap:14px;padding-bottom:150px;}
+  .chartcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+    padding:18px;animation:rise .35s ease backwards;}
+  .chartcard .chead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .chartcard .ctitle{font-family:var(--ui);font-weight:600;font-size:18px;}
+  .chartcard .csub{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-top:3px;}
+  .chartcard .cdel{background:none;border:none;color:var(--text-dim);font-size:18px;cursor:pointer;line-height:1;padding:2px;transition:color .12s;flex:0 0 auto;}
+  .chartcard .cdel:active{color:var(--accent);}
+  .chartcard .cnote{font-family:var(--mono);font-size:12px;color:var(--text-dim);text-align:center;padding:26px 0 8px;line-height:1.6;}
+
+  .donut-wrap{display:flex;justify-content:center;padding:16px 0 18px;}
+  .donut{position:relative;width:188px;height:188px;}
+  .donut svg{transform:rotate(-90deg);display:block;}
+  .donut .seg{fill:none;}
+  .donut .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;pointer-events:none;}
+  .donut .center .num{font-family:var(--display);font-weight:900;font-size:34px;line-height:1;color:var(--text);}
+  .donut .center .lbl{font-family:var(--mono);font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim);}
+
+  .legend{display:flex;flex-direction:column;}
+  .leg-row{display:flex;align-items:center;gap:11px;padding:11px 2px;border-top:1px solid var(--line-soft);}
+  .leg-row:first-child{border-top:none;}
+  .leg-dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto;}
+  .leg-name{font-family:var(--ui);font-weight:500;font-size:14px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .leg-pct{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text-mid);}
+  .leg-count{font-family:var(--mono);font-size:11px;color:var(--text-dim);width:42px;text-align:right;}
+
+  /* chart-sheet pickers */
+  .pick-list{display:flex;flex-direction:column;gap:10px;margin-bottom:22px;}
+  .pickcard{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;
+    border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:14px 15px;cursor:pointer;
+    transition:border-color .12s, background .12s, transform .1s;}
+  .pickcard:active{transform:scale(.98);}
+  .pickcard.sel{border-color:var(--accent);background:#160708;}
+  .pickcard .pname{font-family:var(--ui);font-weight:600;font-size:15px;}
+  .pickcard .pmeta{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+  .chiprow{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px;}
+  .fchip{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--text-mid);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:var(--r-chip);padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:7px;
+    transition:border-color .12s, background .12s, color .12s;}
+  .fchip .ftype{font-size:9px;color:var(--text-dim);letter-spacing:1px;}
+  .fchip.sel{border-color:var(--accent);background:#160708;color:var(--text);}
+  .fchip.sel .ftype{color:var(--accent);}
+  .seg-toggle{display:flex;gap:8px;margin-bottom:22px;}
+  .seg-toggle button{flex:1;font-family:var(--ui);font-weight:600;font-size:13px;color:var(--text-mid);
+    background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;
+    transition:border-color .12s, background .12s, color .12s;}
+  .seg-toggle button.sel{border-color:var(--accent);background:#160708;color:var(--text);}
+  .sheet-note{font-family:var(--mono);font-size:11px;color:var(--text-dim);line-height:1.6;margin:-4px 0 20px;}
+  .typecard.soon{opacity:.4;cursor:not-allowed;}
+  .typecard .soontag{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:9px;font-weight:700;
+    letter-spacing:1px;color:var(--text-dim);border:1px solid var(--line);border-radius:var(--r-chip);padding:2px 7px;}
+  .primary.off{opacity:.35;pointer-events:none;}
+  .step2-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .step2-head h2{margin:0;}
+  .step2-head .sub{margin:2px 0 0;}
+  .step2-head .backbtn{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:var(--surface-2);
+    color:var(--text);display:grid;place-items:center;cursor:pointer;font-size:18px;flex:0 0 auto;transition:transform .12s;}
+  .step2-head .backbtn:active{transform:scale(.92);}
+
   @keyframes rise{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
   @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;}}
 </style>
@@ -260,7 +320,21 @@
     <!-- pager -->
     <div class="pager" id="pager">
 
-      <!-- PAGE 0: HOME (data) -->
+      <!-- PAGE 0: DASHBOARD (charts) -->
+      <section class="page" id="page-dashboard">
+        <div class="page-head">
+          <h1 class="page-title">Dashboard</h1>
+          <span class="count" id="db-count">00</span>
+        </div>
+        <div class="charts" id="db-list"></div>
+        <div class="empty hidden" id="db-empty">
+          <div class="glyph"><span>&#9684;</span></div>
+          <h3>No charts yet</h3>
+          <p>Create a pie chart from one of your models to see your data at a glance.</p>
+        </div>
+      </section>
+
+      <!-- PAGE 1: HOME (data) -->
       <section class="page" id="page-home">
         <div class="page-head">
           <h1 class="page-title">Records</h1>
@@ -279,7 +353,7 @@
         </div>
       </section>
 
-      <!-- PAGE 1: SCHEMA (structure) -->
+      <!-- PAGE 2: SCHEMA (structure) -->
       <section class="page" id="page-schemas">
         <div class="page-head">
           <h1 class="page-title">Schema</h1>
@@ -297,7 +371,7 @@
         </div>
       </section>
 
-      <!-- PAGE 2: SETTINGS -->
+      <!-- PAGE 3: SETTINGS -->
       <section class="page" id="page-settings">
         <div class="page-head">
           <h1 class="page-title">Profile</h1>
@@ -330,6 +404,9 @@
     </div>
 
     <!-- action bars -->
+    <div class="bottombar above-nav" id="bar-dashboard">
+      <button class="primary" id="new-chart-btn"><span class="plus">+</span> New chart</button>
+    </div>
     <div class="bottombar above-nav" id="bar-schemas">
       <button class="primary" id="new-model-btn"><span class="plus">+</span> New model</button>
     </div>
@@ -343,13 +420,16 @@
 
     <!-- bottom nav -->
     <nav class="navbar" id="navbar">
-      <button class="navbtn active" data-page="0" aria-label="Home">
+      <button class="navbtn active" data-page="0" aria-label="Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M12 3v9l6.4-6.4A9 9 0 0 0 12 3z"/></svg>
+      </button>
+      <button class="navbtn" data-page="1" aria-label="Home">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.4V21h5v-6h4v6h5V9.4"/></svg>
       </button>
-      <button class="navbtn" data-page="1" aria-label="Schema">
+      <button class="navbtn" data-page="2" aria-label="Schema">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
       </button>
-      <button class="navbtn" data-page="2" aria-label="Settings">
+      <button class="navbtn" data-page="3" aria-label="Settings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.6 7.6 0 0 0-1.7-1l-.3-2.5h-4l-.3 2.5a7.6 7.6 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.6 7.6 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7.6 7.6 0 0 0 1.7-1l2.3 1 2-3.4z"/></svg>
       </button>
     </nav>
@@ -424,6 +504,41 @@
       <button class="primary" id="add-record-confirm">Save record</button>
     </div>
 
+    <!-- SHEET: new chart (2-step wizard) -->
+    <div class="scrim" data-close-sheet="chart"></div>
+    <div class="sheet" id="sheet-chart">
+      <div class="grabber"></div>
+
+      <!-- STEP 1: what to chart -->
+      <div id="chart-step1">
+        <h2>New chart</h2>
+        <div class="sub">Pick a model &amp; chart type</div>
+
+        <label class="flabel">Model</label>
+        <div class="pick-list" id="chart-models"></div>
+
+        <label class="flabel">Chart type</label>
+        <div class="typegrid" id="chart-types"></div>
+
+        <button class="primary off" id="chart-next">Next &rsaquo;</button>
+      </div>
+
+      <!-- STEP 2: type-specific configuration -->
+      <div id="chart-step2" class="hidden">
+        <div class="step2-head">
+          <button class="backbtn" id="chart-back" type="button">&lsaquo;</button>
+          <div>
+            <h2>Configure</h2>
+            <div class="sub" id="chart-step2-sub">model &middot; type</div>
+          </div>
+        </div>
+
+        <div id="chart-config"></div>
+
+        <button class="primary" id="create-chart-confirm">Create chart</button>
+      </div>
+    </div>
+
   </div>
 
 <script>
@@ -460,7 +575,7 @@
   }
 
   /* ---------- render lists ---------- */
-  function renderAll(){renderLifegrid();renderSchemas();}
+  function renderAll(){renderDashboard();renderLifegrid();renderSchemas();}
 
   function renderLifegrid(){
     var list=$("lg-list"),empty=$("lg-empty");
@@ -583,16 +698,17 @@
   });
 
   /* ---------- bottom bar control ---------- */
-  function hidePagerBars(){$("bar-schemas").classList.remove("show");}
+  function hidePagerBars(){$("bar-schemas").classList.remove("show");$("bar-dashboard").classList.remove("show");}
   function updateBars(){
-    // only the schema page shows a pager action bar
+    // Dashboard (page 0) and Schema (page 2) each show a pager action bar
     var recOpen=$("overlay-records").classList.contains("open");
     var fldOpen=$("overlay-fields").classList.contains("open");
     if(recOpen||fldOpen)return;
     $("bar-records").classList.remove("show");
     $("bar-fields").classList.remove("show");
-    if(activePage()===1){$("bar-schemas").classList.add("show");}
-    else{$("bar-schemas").classList.remove("show");}
+    var p=activePage();
+    $("bar-dashboard").classList.toggle("show",p===0);
+    $("bar-schemas").classList.toggle("show",p===2);
   }
 
   /* ---------- pager + bottom nav ---------- */
@@ -604,7 +720,7 @@
   }
   pager.addEventListener("scroll",function(){window.requestAnimationFrame(function(){syncNav();updateBars();});});
   navbtns.forEach(function(b){b.addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth*parseInt(b.dataset.page,10),behavior:"smooth"});});});
-  $("lg-goto-schemas").addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth,behavior:"smooth"});});
+  $("lg-goto-schemas").addEventListener("click",function(){pager.scrollTo({left:pager.clientWidth*2,behavior:"smooth"});});
 
   /* ---------- search ---------- */
   $("lg-search").addEventListener("input",function(){lgQuery=this.value.trim().toLowerCase();renderLifegrid();});
@@ -685,6 +801,200 @@
   /* enter to submit */
   $("model-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("create-model-confirm").click();});
   $("field-name-input").addEventListener("keydown",function(e){if(e.key==="Enter")$("add-field-confirm").click();});
+
+  /* ---------- dashboard / charts ---------- */
+  var charts=[];                 // {model:<ref>, type:'pie', groupBy, style, title}
+  var chartModel=null,chartType=null,chartField=null,chartStyle="donut",chartTitle="";
+  var PALETTE=["#d71921","#ffffff","#9a9a9a","#5e5e5e","#c98a8d","#3a3a3a","#e8e8e8","#7a7a7a"];
+  var SVGNS="http://www.w3.org/2000/svg";
+
+  // Chart-type registry — only 'pie' is live; bar/line are placeholders for later.
+  var CHART_TYPES=[
+    {key:"pie", code:"PIE", label:"Pie / donut", soon:false},
+    {key:"bar", code:"BAR", label:"Bar", soon:true},
+    {key:"line",code:"LINE",label:"Line", soon:true}
+  ];
+  function typeLabel(k){var t=CHART_TYPES.filter(function(x){return x.key===k;})[0];return t?t.label:k;}
+
+  // Tally records by the chosen field's value -> sorted slices with colors + percentages
+  function computeSlices(m,fieldName){
+    var field=m.fields.filter(function(f){return f.name===fieldName;})[0];
+    var counts={},order=[];
+    m.records.forEach(function(r){
+      var v=r[fieldName],key;
+      if(v===undefined||v===null||v==="")key="—";
+      else if(field&&field.type==="BOOL")key=v?"true":"false";
+      else key=String(v);
+      if(counts[key]===undefined){counts[key]=0;order.push(key);}
+      counts[key]++;
+    });
+    var arr=order.map(function(k){return {label:k,count:counts[k]};});
+    arr.sort(function(a,b){return b.count-a.count;});
+    var total=arr.reduce(function(s,x){return s+x.count;},0);
+    arr.forEach(function(x,i){x.color=PALETTE[i%PALETTE.length];x.pct=total?Math.round(x.count/total*100):0;});
+    return {slices:arr,total:total};
+  }
+
+  function buildDonut(data,style){
+    var pie=style==="pie";
+    var R=pie?47:70,SW=pie?94:34,CX=94,CY=94,C=2*Math.PI*R,GAP=3;
+    var wrap=document.createElement("div");wrap.className="donut-wrap";
+    var d=document.createElement("div");d.className="donut";
+    var svg=document.createElementNS(SVGNS,"svg");
+    svg.setAttribute("width","188");svg.setAttribute("height","188");svg.setAttribute("viewBox","0 0 188 188");
+    var off=0;
+    data.slices.forEach(function(s){
+      var frac=s.count/data.total;
+      var len=Math.max(frac*C-(data.slices.length>1?GAP:0),0.5);
+      var c=document.createElementNS(SVGNS,"circle");
+      c.setAttribute("class","seg");
+      c.setAttribute("cx",CX);c.setAttribute("cy",CY);c.setAttribute("r",R);
+      c.setAttribute("stroke",s.color);c.setAttribute("stroke-width",SW);
+      c.setAttribute("stroke-dasharray",len+" "+(C-len));
+      c.setAttribute("stroke-dashoffset",String(-off));
+      svg.appendChild(c);
+      off+=frac*C;
+    });
+    d.appendChild(svg);
+    if(!pie){
+      var center=document.createElement("div");center.className="center";
+      center.innerHTML='<span class="num">'+data.total+'</span><span class="lbl">records</span>';
+      d.appendChild(center);
+    }
+    wrap.appendChild(d);return wrap;
+  }
+
+  function buildLegend(data){
+    var leg=document.createElement("div");leg.className="legend";
+    data.slices.forEach(function(s){
+      var row=document.createElement("div");row.className="leg-row";
+      row.innerHTML='<span class="leg-dot" style="background:'+s.color+'"></span>'+
+        '<span class="leg-name">'+esc(s.label)+'</span>'+
+        '<span class="leg-pct">'+s.pct+'%</span>'+
+        '<span class="leg-count">'+s.count+'</span>';
+      leg.appendChild(row);
+    });
+    return leg;
+  }
+
+  function renderDashboard(){
+    var list=$("db-list"),empty=$("db-empty");
+    list.innerHTML="";
+    $("db-count").textContent=String(charts.length).padStart(2,"0");
+    if(charts.length===0){list.classList.add("hidden");empty.classList.remove("hidden");return;}
+    empty.classList.add("hidden");list.classList.remove("hidden");
+    charts.forEach(function(c,i){
+      var m=c.model,alive=models.indexOf(m)!==-1;
+      var card=document.createElement("div");
+      card.className="chartcard";card.style.animationDelay=(i*0.05)+"s";
+      var sub=alive?(esc(m.name)+" · "+typeLabel(c.type)+" · by "+esc(c.groupBy)):"model deleted";
+      card.innerHTML='<div class="chead"><div><div class="ctitle">'+esc(c.title||(alive?m.name:"Chart"))+'</div>'+
+        '<div class="csub">'+sub+'</div></div><button class="cdel" aria-label="Remove">&times;</button></div>';
+      if(!alive){
+        var n=document.createElement("div");n.className="cnote";n.textContent="This model was deleted.";card.appendChild(n);
+      }else if(c.type==="pie"){
+        var data=computeSlices(m,c.groupBy);
+        if(data.total===0){
+          var n2=document.createElement("div");n2.className="cnote";
+          n2.innerHTML="No records to chart yet.<br>Add data to "+esc(m.name)+" in Home.";card.appendChild(n2);
+        }else{
+          card.appendChild(buildDonut(data,c.style));
+          card.appendChild(buildLegend(data));
+        }
+      }else{
+        var n3=document.createElement("div");n3.className="cnote";n3.textContent=typeLabel(c.type)+" charts coming soon.";card.appendChild(n3);
+      }
+      card.querySelector(".cdel").addEventListener("click",function(){charts.splice(i,1);renderDashboard();});
+      list.appendChild(card);
+    });
+  }
+
+  /* ----- STEP 1: model + chart type ----- */
+  function renderChartModels(){
+    var box=$("chart-models");box.innerHTML="";
+    if(models.length===0){box.innerHTML='<div class="sheet-note">No models yet — create one in Schema first.</div>';return;}
+    models.forEach(function(m){
+      var b=document.createElement("button");b.type="button";
+      b.className="pickcard"+(chartModel===m?" sel":"");
+      b.innerHTML='<span class="pname">'+esc(m.name)+'</span><span class="pmeta">'+m.records.length+' rec · '+m.fields.length+' fld</span>';
+      b.addEventListener("click",function(){chartModel=m;chartField=null;renderChartModels();updateNextBtn();});
+      box.appendChild(b);
+    });
+  }
+  function renderChartTypes(){
+    var box=$("chart-types");box.innerHTML="";
+    CHART_TYPES.forEach(function(t,idx){
+      var b=document.createElement("button");b.type="button";
+      b.className="typecard"+(chartType===t.key?" sel":"")+(t.soon?" soon":"")+(idx===CHART_TYPES.length-1?" full":"");
+      b.innerHTML='<span class="seldot"></span>'+(t.soon?'<span class="soontag">SOON</span>':'')+
+        '<div class="code">'+t.code+'</div><div class="lbl">'+t.label+'</div>';
+      if(!t.soon)b.addEventListener("click",function(){chartType=t.key;renderChartTypes();updateNextBtn();});
+      box.appendChild(b);
+    });
+  }
+  function updateNextBtn(){$("chart-next").classList.toggle("off",!(chartModel&&chartType));}
+
+  /* ----- STEP 2: type-specific configuration ----- */
+  function renderChartFields(){
+    var box=$("chart-fields");if(!box)return;box.innerHTML="";
+    if(!chartModel)return;
+    if(chartModel.fields.length===0){box.innerHTML='<div class="sheet-note">This model has no fields — add some in Schema.</div>';return;}
+    chartModel.fields.forEach(function(f){
+      var b=document.createElement("button");b.type="button";
+      b.className="fchip"+(chartField===f.name?" sel":"");
+      b.innerHTML=esc(f.name)+' <span class="ftype">'+f.type+'</span>';
+      b.addEventListener("click",function(){chartField=f.name;renderChartFields();});
+      box.appendChild(b);
+    });
+  }
+  // Build the config controls for the chosen chart type. Add a branch here per new type.
+  function buildChartConfig(){
+    var box=$("chart-config");box.innerHTML="";
+    if(chartType==="pie"){
+      box.innerHTML=
+        '<label class="flabel">Group by</label><div class="chiprow" id="chart-fields"></div>'+
+        '<label class="flabel">Style</label>'+
+        '<div class="seg-toggle" id="chart-style">'+
+          '<button type="button" data-style="donut">Donut</button>'+
+          '<button type="button" data-style="pie">Pie</button>'+
+        '</div>'+
+        '<label class="flabel">Title</label>'+
+        '<input class="input" id="chart-title-input" placeholder="e.g. workouts by exercise" autocomplete="off" spellcheck="false" />';
+      renderChartFields();
+      document.querySelectorAll("#chart-style button").forEach(function(b){
+        b.classList.toggle("sel",b.dataset.style===chartStyle);
+        b.addEventListener("click",function(){
+          chartStyle=b.dataset.style;
+          document.querySelectorAll("#chart-style button").forEach(function(x){x.classList.toggle("sel",x===b);});
+        });
+      });
+      if(!chartTitle)chartTitle=chartModel.name;
+      var ti=$("chart-title-input");ti.value=chartTitle;
+      ti.addEventListener("input",function(){chartTitle=ti.value;});
+    }
+  }
+
+  function goStep(n){
+    $("chart-step1").classList.toggle("hidden",n!==1);
+    $("chart-step2").classList.toggle("hidden",n!==2);
+  }
+
+  $("new-chart-btn").addEventListener("click",function(){
+    chartModel=null;chartType=null;chartField=null;chartStyle="donut";chartTitle="";
+    renderChartModels();renderChartTypes();updateNextBtn();
+    goStep(1);openSheet("chart");
+  });
+  $("chart-next").addEventListener("click",function(){
+    if(!chartModel||!chartType)return;
+    $("chart-step2-sub").textContent=chartModel.name+" · "+typeLabel(chartType);
+    buildChartConfig();goStep(2);
+  });
+  $("chart-back").addEventListener("click",function(){goStep(1);});
+  $("create-chart-confirm").addEventListener("click",function(){
+    if(!chartModel||!chartType||!chartField)return;
+    charts.push({model:chartModel,type:chartType,groupBy:chartField,style:chartStyle,title:(chartTitle||"").trim()});
+    closeSheet("chart");renderDashboard();
+  });
 
   /* ---------- settings / profile ---------- */
   var profile={first:"",last:"",email:"",pic:""};

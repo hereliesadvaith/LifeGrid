@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../state/app_store.dart';
 import '../theme/tokens.dart';
 import 'dashboard/dashboard_tab.dart';
+import 'dashboard/new_chart_sheet.dart';
 import 'home/home_tab.dart';
 import 'schema/schema_tab.dart';
 import 'schema/new_model_sheet.dart';
@@ -49,7 +50,9 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
+    final onDashboard = _index == 0;
     final onSchema = _index == 2;
+    final showBar = onDashboard || onSchema;
 
     return Scaffold(
       body: DottedBackground(
@@ -82,25 +85,35 @@ class _HomeShellState extends State<HomeShell> {
                       ),
                     ],
                   ),
-                  // Floating "New model" bar — Schema page only, above the nav.
+                  // Floating action bar — "New chart" on Dashboard, "New model"
+                  // on Schema, hidden elsewhere; sits above the nav.
                   Positioned(
                     left: 0,
                     right: 0,
                     bottom: T.navHeight + bottomInset,
                     child: IgnorePointer(
-                      ignoring: !onSchema,
+                      ignoring: !showBar,
                       child: AnimatedOpacity(
-                        opacity: onSchema ? 1 : 0,
+                        opacity: showBar ? 1 : 0,
                         duration: const Duration(milliseconds: 150),
                         child: _ActionBar(
-                          child: PrimaryButton(
-                            label: 'New model',
-                            plus: true,
-                            onPressed: () => showNewModelSheet(
-                              context,
-                              context.read<AppStore>(),
-                            ),
-                          ),
+                          child: onSchema
+                              ? PrimaryButton(
+                                  label: 'New model',
+                                  plus: true,
+                                  onPressed: () => showNewModelSheet(
+                                    context,
+                                    context.read<AppStore>(),
+                                  ),
+                                )
+                              : PrimaryButton(
+                                  label: 'New chart',
+                                  plus: true,
+                                  onPressed: () => showNewChartSheet(
+                                    context,
+                                    context.read<AppStore>(),
+                                  ),
+                                ),
                         ),
                       ),
                     ),
