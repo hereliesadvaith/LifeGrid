@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#FFFFFF</color>
+
+    <!-- Clock widget palette, ported from the app's design tokens (lib/theme/tokens.dart). -->
+    <color name="clock_surface">#0C0C0C</color>
+    <color name="clock_line">#262626</color>
+    <color name="clock_text">#FFFFFF</color>
+    <color name="clock_text_mid">#9A9A9A</color>
+    <color name="clock_text_dim">#5E5E5E</color>
+    <color name="clock_accent">#D71921</color>
 </resources>

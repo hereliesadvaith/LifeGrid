@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nothing To-Do · 4×4 widget mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Doto:wght@400;600;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --ink: #f3f3f3;
+    --dim: #6a6a6a;
+    --line: #1d1d1d;
+    --accent: #ff3b30;
+    --dot: 1px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 20% 10%, #1a1a1a 0%, #050505 60%) fixed;
+    color: var(--ink);
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    display: grid;
+    place-items: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .stage {
+    display: grid;
+    gap: 28px;
+    padding: 40px 24px;
+    justify-items: center;
+  }
+
+  .meta {
+    text-align: center;
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .meta b { color: var(--ink); font-weight: 600; }
+
+  /* ─── the widget ────────────────────────────────────── */
+  .widget {
+    width: 360px;
+    height: 360px;
+    background: var(--surface);
+    border-radius: 28px;
+    padding: 22px 22px 18px;
+    display: grid;
+    grid-template-rows: auto auto 1fr auto;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 30px 60px -20px rgba(0,0,0,0.7),
+      0 0 0 1px rgba(255,255,255,0.04) inset;
+    /* faint dot grid pattern in background */
+    background-image:
+      radial-gradient(rgba(255,255,255,0.035) var(--dot), transparent var(--dot));
+    background-size: 8px 8px;
+    background-position: 0 0;
+  }
+
+  /* corner registration marks – Nothing-style */
+  .widget::before,
+  .widget::after {
+    content: "";
+    position: absolute;
+    width: 10px; height: 10px;
+    border: 1px solid var(--dim);
+    opacity: 0.35;
+  }
+  .widget::before { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+  .widget::after  { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+  /* header */
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-family: "Doto", "JetBrains Mono", monospace;
+    font-weight: 800;
+  }
+  .head .title {
+    font-size: 26px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+  .head .title .dot { color: var(--accent); }
+  .head .date {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 0.12em;
+  }
+
+  .rule {
+    height: 1px;
+    background: repeating-linear-gradient(
+      to right,
+      var(--line) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
+  /* list */
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    justify-content: center;
+  }
+  .task {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 4px;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 6px;
+    transition: background 120ms ease;
+  }
+  .task:hover { background: rgba(255,255,255,0.025); }
+
+  .box {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--ink);
+    border-radius: 3px;
+    display: grid;
+    place-items: center;
+    transition: all 140ms ease;
+  }
+  .box svg { width: 12px; height: 12px; opacity: 0; transform: scale(0.6); transition: all 140ms ease; }
+
+  .label {
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    transition: color 140ms ease, text-decoration-color 140ms ease;
+  }
+  .tag {
+    font-family: "Doto", monospace;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+    padding: 2px 6px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  .tag.hot { color: var(--accent); border-color: rgba(255,59,48,0.4); }
+
+  /* done state */
+  .task.done .box {
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+  .task.done .box svg { opacity: 1; transform: scale(1); color: var(--surface); }
+  .task.done .label {
+    color: var(--dim);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+    text-decoration-color: var(--dim);
+  }
+  .task.done .tag { opacity: 0.4; }
+
+  /* footer */
+  .foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: "Doto", monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--dim);
+    text-transform: uppercase;
+  }
+  .foot .count b { color: var(--ink); font-weight: 800; }
+  .foot .count .accent { color: var(--accent); }
+
+  .add {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--surface);
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 120ms ease;
+    border: none;
+    font-family: inherit;
+  }
+  .add:hover { transform: scale(1.06); }
+  .add:active { transform: scale(0.94); }
+
+  .hint {
+    color: var(--dim);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .hint .accent { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="meta">
+      Nothing&nbsp;OS · todo widget · <b>4&times;4</b> · 360&times;360
+    </div>
+
+    <div class="widget" id="w-dark">
+      <div class="head">
+        <div class="title">TO<span class="dot">·</span>DO</div>
+        <div class="date" id="date">2026·05·24</div>
+      </div>
+      <div class="rule"></div>
+
+      <div class="list" id="list"></div>
+
+      <div class="foot">
+        <div class="count">
+          <b id="left">0</b>&nbsp;LEFT&nbsp;·&nbsp;<span class="accent" id="done">0</span>&nbsp;DONE
+        </div>
+        <button class="add" title="Add task" aria-label="Add task">+</button>
+      </div>
+    </div>
+
+    <div class="hint">tap a row to toggle <span class="accent">done</span></div>
+  </div>
+
+<script>
+  const tasks = [
+    { text: "Buy groceries",        tag: "today",  hot: false, done: false },
+    { text: "Call mom",             tag: "today",  hot: false, done: false },
+    { text: "Finish design review", tag: "work",   hot: true,  done: true  },
+    { text: "Workout · 30 min",     tag: "health", hot: false, done: false },
+    { text: "Read 20 pages",        tag: "later",  hot: false, done: true  },
+  ];
+
+  function renderAll() {
+    const listEl = document.getElementById("list");
+    const leftEl = document.getElementById("left");
+    const doneEl = document.getElementById("done");
+    listEl.innerHTML = "";
+    tasks.forEach((t, i) => {
+      const row = document.createElement("div");
+      row.className = "task" + (t.done ? " done" : "");
+      row.innerHTML = `
+        <div class="box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="square" stroke-linejoin="miter">
+            <polyline points="5 12 10 17 19 7"/>
+          </svg>
+        </div>
+        <div class="label">${t.text}</div>
+        <div class="tag${t.hot ? " hot" : ""}">${t.tag}</div>
+      `;
+      row.addEventListener("click", () => {
+        tasks[i].done = !tasks[i].done;
+        renderAll();
+      });
+      listEl.appendChild(row);
+    });
+    const done = tasks.filter(t => t.done).length;
+    leftEl.textContent = String(tasks.length - done).padStart(2, "0");
+    doneEl.textContent = String(done).padStart(2, "0");
+  }
+
+  // live date in Nothing format YYYY·MM·DD
+  const d = new Date();
+  const fmt = `${d.getFullYear()}·${String(d.getMonth()+1).padStart(2,"0")}·${String(d.getDate()).padStart(2,"0")}`;
+  document.querySelectorAll(".date").forEach(el => el.textContent = fmt);
+
+  renderAll();
+</script>
+</body>
+</html>

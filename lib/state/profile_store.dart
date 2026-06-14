@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/profile.dart';
@@ -11,6 +12,9 @@ class ProfileStore extends ChangeNotifier {
   static const _kLast = 'profile_last';
   static const _kEmail = 'profile_email';
   static const _kPhoto = 'profile_photo';
+
+  /// Bridges to the native home-screen clock widget (Android only).
+  static const _widgetChannel = MethodChannel('lifegrid/widget');
 
   Profile _profile = const Profile();
   Profile get profile => _profile;
@@ -38,5 +42,17 @@ class ProfileStore extends ChangeNotifier {
     await prefs.setString(_kLast, profile.lastName);
     await prefs.setString(_kEmail, profile.email);
     await prefs.setString(_kPhoto, profile.photoPath);
+    await _refreshWidget();
+  }
+
+  /// Asks the native clock widget to re-read the (just-saved) first name. No-op
+  /// off Android; failures (e.g. widget not placed) are intentionally ignored.
+  Future<void> _refreshWidget() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      await _widgetChannel.invokeMethod('refreshClock');
+    } catch (_) {
+      // Channel not wired or no widget placed — nothing to do.
+    }
   }
 }

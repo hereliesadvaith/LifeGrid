@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  No updatePeriodMillis: the clock ticks itself via TextClock, so the OS never
+  needs to wake the app to refresh the time. The provider only runs when the
+  user taps the 12/24h toggle.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="250dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/clock_widget"
+    android:previewLayout="@layout/clock_widget"
+    android:description="@string/clock_widget_description" />

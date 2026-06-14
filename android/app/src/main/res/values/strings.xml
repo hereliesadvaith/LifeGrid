@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clock_widget_label">Lifegrid Clock</string>
+    <string name="clock_widget_description">A Nothing-style clock: time, date, ISO week, and a 12/24h toggle.</string>
+</resources>
