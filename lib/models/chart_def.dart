@@ -1,6 +1,8 @@
-/// Chart types. Only [pie] is implemented; [bar]/[line] are declared now (and
-/// shown as "soon" in the picker) so adding them later is a localized change.
+/// Chart types. [pie] and [todo] are implemented; [bar]/[line] are declared now
+/// (and shown as "soon" in the picker) so adding them later is a localized
+/// change.
 enum ChartType {
+  todo('todo', 'To-do list', 'TODO', soon: false),
   pie('pie', 'Pie / donut', 'PIE', soon: false),
   bar('bar', 'Bar', 'BAR', soon: true),
   line('line', 'Line', 'LINE', soon: true);
@@ -71,6 +73,9 @@ class ChartDef {
     required this.dateFieldId,
     required this.dateFilter,
     required this.sumFieldId,
+    required this.labelFieldId,
+    required this.doneFieldId,
+    required this.tagFieldId,
   });
 
   final int id;
@@ -96,6 +101,19 @@ class ChartDef {
   /// [DateFilter.week] when never explicitly chosen.
   final DateFilter dateFilter;
 
+  // --- todo-chart fields (null on non-todo charts) ---
+
+  /// FK -> fields.id (a STR field). The task text shown on each row. Null if
+  /// the field was deleted after the chart was made.
+  final int? labelFieldId;
+
+  /// FK -> fields.id (a BOOL field). Drives each row's checkbox and the
+  /// LEFT/DONE counts. Null if the field was deleted.
+  final int? doneFieldId;
+
+  /// FK -> fields.id (a STR field). Optional pill shown on the right of a row.
+  final int? tagFieldId;
+
   factory ChartDef.fromMap(Map<String, Object?> m) => ChartDef(
         id: m['id'] as int,
         modelId: m['model_id'] as int,
@@ -107,5 +125,8 @@ class ChartDef {
         dateFieldId: m['date_field'] as int?,
         dateFilter: DateFilter.fromCode(m['date_filter'] as String?),
         sumFieldId: m['sum_field'] as int?,
+        labelFieldId: m['label_field'] as int?,
+        doneFieldId: m['done_field'] as int?,
+        tagFieldId: m['tag_field'] as int?,
       );
 }

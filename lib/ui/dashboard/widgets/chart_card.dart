@@ -13,6 +13,7 @@ import '../../../theme/typography.dart';
 import '../../widgets/app_card.dart';
 import 'chart_legend.dart';
 import 'donut_painter.dart';
+import 'todo_list.dart';
 
 /// A dashboard chart card: header (title / "model · type · by field" / delete)
 /// and a body that renders per chart type. Loads the model's records itself so
@@ -78,6 +79,23 @@ class _ChartCardState extends State<ChartCard> {
     return null;
   }
 
+  /// A configured field of [type] that still exists on the model, by id.
+  FieldDef? _fieldOf(int? id, FieldType type) {
+    if (id == null) return null;
+    for (final f in widget.model.fields) {
+      if (f.id == id && f.type == type) return f;
+    }
+    return null;
+  }
+
+  /// Flip a to-do row's done state: mutate the in-memory record (so the list
+  /// updates without a refetch) then persist the whole record in the background.
+  void _toggleDone(RecordEntry r, FieldDef doneField) {
+    final next = r.values[doneField.id] != true;
+    setState(() => r.values[doneField.id] = next);
+    context.read<AppStore>().updateRecord(r.id, widget.model.fields, r.values);
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = widget.chart;
@@ -107,9 +125,17 @@ class _ChartCardState extends State<ChartCard> {
   }
 
   Widget _body(FieldDef? gf, FieldDef? df) {
-    if (widget.chart.type != ChartType.pie) {
-      return _Note('${widget.chart.type.label} charts coming soon.');
+    switch (widget.chart.type) {
+      case ChartType.pie:
+        return _pieBody(gf, df);
+      case ChartType.todo:
+        return _todoBody(df);
+      default:
+        return _Note('${widget.chart.type.label} charts coming soon.');
     }
+  }
+
+  Widget _pieBody(FieldDef? gf, FieldDef? df) {
     if (gf == null) {
       return const _Note('Group-by field no longer exists.\nDelete and recreate this chart.');
     }
@@ -149,6 +175,40 @@ class _ChartCardState extends State<ChartCard> {
             const SizedBox(height: 18),
             ChartLegend(data: data),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _todoBody(FieldDef? df) {
+    final labelField = _fieldOf(widget.chart.labelFieldId, FieldType.str);
+    final doneField = _fieldOf(widget.chart.doneFieldId, FieldType.bool_);
+    if (labelField == null || doneField == null) {
+      return const _Note(
+          'A field this list needs no longer exists.\nDelete and recreate this chart.');
+    }
+    final tagField = _fieldOf(widget.chart.tagFieldId, FieldType.str);
+    return FutureBuilder<List<RecordEntry>>(
+      future: _records,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const SizedBox(height: 188);
+        }
+        var records = snap.data!;
+        if (df != null) {
+          records = filterByDateRange(records, df, widget.chart.dateFilter);
+        }
+        if (records.isEmpty) {
+          return _Note(df != null
+              ? 'No ${widget.model.name} records in the current ${widget.chart.dateFilter.label.toLowerCase()}.'
+              : 'No records yet.\nAdd data to ${widget.model.name} in Record.');
+        }
+        return TodoList(
+          records: records,
+          labelField: labelField,
+          doneField: doneField,
+          tagField: tagField,
+          onToggle: (r) => _toggleDone(r, doneField),
         );
       },
     );

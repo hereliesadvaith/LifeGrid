@@ -32,7 +32,7 @@ class DashboardTab extends StatelessWidget {
                         glyph: '◔',
                         title: 'No charts yet',
                         message:
-                            'Create a pie chart from one of your models to see your data at a glance.',
+                            'Create a chart from one of your models to see your data at a glance.',
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.only(top: 4, bottom: 130),

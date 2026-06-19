@@ -227,11 +227,14 @@ class ModelsRepository {
   Future<int> createChart({
     required int modelId,
     required ChartType type,
-    required int groupFieldId,
+    int? groupFieldId,
     required PieStyle style,
     required String title,
     int? dateFieldId,
     int? sumFieldId,
+    int? labelFieldId,
+    int? doneFieldId,
+    int? tagFieldId,
   }) async {
     final db = await _db;
     final posRows = await db
@@ -246,6 +249,9 @@ class ModelsRepository {
       'created_at': DateTime.now().millisecondsSinceEpoch,
       'date_field': dateFieldId,
       'sum_field': sumFieldId,
+      'label_field': labelFieldId,
+      'done_field': doneFieldId,
+      'tag_field': tagFieldId,
     });
   }
 

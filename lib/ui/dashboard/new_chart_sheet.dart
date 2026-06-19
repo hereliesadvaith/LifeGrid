@@ -59,6 +59,10 @@ class _NewChartWizardState extends State<_NewChartWizard> {
   bool _useSum = false; // false = count measure, true = sum a numeric field
   FieldDef? _sumField; // the field summed when _useSum (slices/%/center)
   FieldDef? _dateField; // optional DATE field to filter by (null = off)
+  // To-do chart config.
+  FieldDef? _todoLabel; // STR field — task text (required)
+  FieldDef? _todoDone; // BOOL field — checkbox / done state (required)
+  FieldDef? _todoTag; // STR field — optional right-side pill (null = off)
 
   /// INT/FLOAT fields on the selected model — candidates for the sum measure.
   List<FieldDef> get _numericFields {
@@ -76,6 +80,20 @@ class _NewChartWizardState extends State<_NewChartWizard> {
     return m.fields.where((f) => f.type == FieldType.date).toList();
   }
 
+  /// STR fields — candidates for the to-do label and tag.
+  List<FieldDef> get _textFields {
+    final m = _model;
+    if (m == null) return const [];
+    return m.fields.where((f) => f.type == FieldType.str).toList();
+  }
+
+  /// BOOL fields — candidates for the to-do done state.
+  List<FieldDef> get _boolFields {
+    final m = _model;
+    if (m == null) return const [];
+    return m.fields.where((f) => f.type == FieldType.bool_).toList();
+  }
+
   @override
   void dispose() {
     _title.dispose();
@@ -83,11 +101,18 @@ class _NewChartWizardState extends State<_NewChartWizard> {
   }
 
   bool get _canNext => _model != null && _type != null;
-  bool get _canCreate =>
-      _type == ChartType.pie &&
-      _model != null &&
-      _groupBy != null &&
-      (!_useSum || _sumField != null); // sum needs a chosen field
+  bool get _canCreate {
+    if (_model == null) return false;
+    switch (_type) {
+      case ChartType.pie:
+        return _groupBy != null &&
+            (!_useSum || _sumField != null); // sum needs a chosen field
+      case ChartType.todo:
+        return _todoLabel != null && _todoDone != null; // tag is optional
+      default:
+        return false;
+    }
+  }
 
   void _next() {
     if (!_canNext) return;
@@ -98,14 +123,18 @@ class _NewChartWizardState extends State<_NewChartWizard> {
   Future<void> _create() async {
     if (!_canCreate) return;
     final title = _title.text.trim();
+    final isTodo = _type == ChartType.todo;
     await widget.store.createChart(
       modelId: _model!.id,
       type: _type!,
-      groupFieldId: _groupBy!.id,
+      groupFieldId: isTodo ? null : _groupBy!.id,
       style: _style,
       title: title.isEmpty ? _model!.name : title,
       dateFieldId: _dateField?.id,
-      sumFieldId: _useSum ? _sumField?.id : null,
+      sumFieldId: !isTodo && _useSum ? _sumField?.id : null,
+      labelFieldId: isTodo ? _todoLabel!.id : null,
+      doneFieldId: isTodo ? _todoDone!.id : null,
+      tagFieldId: isTodo ? _todoTag?.id : null,
     );
     if (mounted) Navigator.of(context).pop();
   }
@@ -159,6 +188,9 @@ class _NewChartWizardState extends State<_NewChartWizard> {
                   _useSum = false;
                   _sumField = null;
                   _dateField = null;
+                  _todoLabel = null;
+                  _todoDone = null;
+                  _todoTag = null;
                 }),
               ),
             )),
@@ -215,7 +247,10 @@ class _NewChartWizardState extends State<_NewChartWizard> {
       ),
       const SizedBox(height: 20),
       // Per-type config. Add a branch here when bar/line land.
-      if (_type == ChartType.pie) ..._pieConfig(),
+      if (_type == ChartType.pie)
+        ..._pieConfig()
+      else if (_type == ChartType.todo)
+        ..._todoConfig(),
       const SizedBox(height: 4),
       _DimmedButton(
         enabled: _canCreate,
@@ -331,6 +366,102 @@ class _NewChartWizardState extends State<_NewChartWizard> {
       ],
       const SheetLabel('Title'),
       SheetInput(controller: _title, hint: 'e.g. workouts by exercise'),
+      const SizedBox(height: 22),
+    ];
+  }
+
+  List<Widget> _todoConfig() {
+    final texts = _textFields;
+    final bools = _boolFields;
+    return [
+      // Label — the task text on each row (required STR field).
+      const SheetLabel('Task label'),
+      if (texts.isEmpty)
+        const _SheetNote('This model has no text field — add one in Schema.')
+      else
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          children: [
+            for (final f in texts)
+              _FieldChip(
+                field: f,
+                selected: _todoLabel?.id == f.id,
+                onTap: () => setState(() {
+                  _todoLabel = f;
+                  if (_todoTag?.id == f.id) _todoTag = null; // can't reuse label
+                }),
+              ),
+          ],
+        ),
+      const SizedBox(height: 22),
+      // Done — the checkbox / LEFT·DONE counts (required BOOL field).
+      const SheetLabel('Done state'),
+      if (bools.isEmpty)
+        const _SheetNote(
+            'This model has no boolean field — add one in Schema to track done.')
+      else
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          children: [
+            for (final f in bools)
+              _FieldChip(
+                field: f,
+                selected: _todoDone?.id == f.id,
+                onTap: () => setState(() => _todoDone = f),
+              ),
+          ],
+        ),
+      const SizedBox(height: 22),
+      // Tag — optional right-side pill. Only the text fields not used as label.
+      if (texts.length > 1 || (texts.isNotEmpty && _todoLabel == null)) ...[
+        const SheetLabel('Tag'),
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          children: [
+            _SelectChip(
+              label: 'Off',
+              selected: _todoTag == null,
+              onTap: () => setState(() => _todoTag = null),
+            ),
+            for (final f in texts.where((f) => f.id != _todoLabel?.id))
+              _SelectChip(
+                label: f.name,
+                code: f.type.code,
+                selected: _todoTag?.id == f.id,
+                onTap: () => setState(() => _todoTag = f),
+              ),
+          ],
+        ),
+        const SizedBox(height: 22),
+      ],
+      // Optional DATE filter — same mechanism as the pie chart.
+      if (_dateFields.isNotEmpty) ...[
+        const SheetLabel('Date filter'),
+        Wrap(
+          spacing: 9,
+          runSpacing: 9,
+          children: [
+            _SelectChip(
+              label: 'Off',
+              selected: _dateField == null,
+              onTap: () => setState(() => _dateField = null),
+            ),
+            for (final f in _dateFields)
+              _SelectChip(
+                label: f.name,
+                code: f.type.code,
+                selected: _dateField?.id == f.id,
+                onTap: () => setState(() => _dateField = f),
+              ),
+          ],
+        ),
+        const SizedBox(height: 22),
+      ],
+      const SheetLabel('Title'),
+      SheetInput(controller: _title, hint: 'e.g. today\'s tasks'),
       const SizedBox(height: 22),
     ];
   }

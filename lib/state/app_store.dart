@@ -96,11 +96,14 @@ class AppStore extends ChangeNotifier {
   Future<void> createChart({
     required int modelId,
     required ChartType type,
-    required int groupFieldId,
+    int? groupFieldId,
     required PieStyle style,
     required String title,
     int? dateFieldId,
     int? sumFieldId,
+    int? labelFieldId,
+    int? doneFieldId,
+    int? tagFieldId,
   }) async {
     await _repo.createChart(
       modelId: modelId,
@@ -110,6 +113,9 @@ class AppStore extends ChangeNotifier {
       title: title,
       dateFieldId: dateFieldId,
       sumFieldId: sumFieldId,
+      labelFieldId: labelFieldId,
+      doneFieldId: doneFieldId,
+      tagFieldId: tagFieldId,
     );
     await load();
   }

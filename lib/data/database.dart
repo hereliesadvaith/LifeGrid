@@ -19,7 +19,7 @@ class AppDatabase {
     final path = p.join(dir.path, 'lifegrid.db');
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -82,6 +82,14 @@ class AppDatabase {
     if (oldVersion < 5) {
       await db.execute('ALTER TABLE charts ADD COLUMN sum_field INTEGER');
     }
+    if (oldVersion < 6) {
+      // To-do chart config. SET NULL isn't expressible via ALTER ADD COLUMN in
+      // SQLite, so these added columns carry no FK action; deletes are guarded
+      // in the UI (the render path treats a missing field as "deleted").
+      await db.execute('ALTER TABLE charts ADD COLUMN label_field INTEGER');
+      await db.execute('ALTER TABLE charts ADD COLUMN done_field INTEGER');
+      await db.execute('ALTER TABLE charts ADD COLUMN tag_field INTEGER');
+    }
   }
 
   /// Dashboard charts — descriptors over an existing model (see plan §2).
@@ -100,7 +108,10 @@ class AppDatabase {
         created_at  INTEGER NOT NULL,
         date_filter TEXT,
         date_field  INTEGER REFERENCES fields(id) ON DELETE SET NULL,
-        sum_field   INTEGER REFERENCES fields(id) ON DELETE SET NULL
+        sum_field   INTEGER REFERENCES fields(id) ON DELETE SET NULL,
+        label_field INTEGER REFERENCES fields(id) ON DELETE SET NULL,
+        done_field  INTEGER REFERENCES fields(id) ON DELETE SET NULL,
+        tag_field   INTEGER REFERENCES fields(id) ON DELETE SET NULL
       )
     ''');
     await db.execute('CREATE INDEX idx_charts_model ON charts(model_id)');
