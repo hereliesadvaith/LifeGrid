@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/field_type.dart';
 import '../../models/app_model.dart';
+import '../../models/field_def.dart';
 import '../../models/record_entry.dart';
 import '../../state/app_store.dart';
 import '../../theme/tokens.dart';
@@ -14,6 +16,12 @@ import '../widgets/empty_state.dart';
 import '../widgets/primary_button.dart';
 import '../widgets/rise_in.dart';
 import 'record_form_sheet.dart';
+
+/// Sentinel sort key meaning "by date added" (records have no field for this).
+const int _kSortByDateAdded = -1;
+
+/// How many records to reveal per page in the list view's infinite scroll.
+const int _kPageSize = 20;
 
 /// Drill-down from the Home tab: the records of one model. Add via the
 /// bottom bar, tap a record to edit, swipe-less × to delete.
@@ -28,6 +36,15 @@ class RecordsPage extends StatefulWidget {
 class _RecordsPageState extends State<RecordsPage> {
   List<RecordEntry>? _records;
 
+  /// Field id to sort by, or [_kSortByDateAdded] for insertion/creation order.
+  int _sortFieldId = _kSortByDateAdded;
+
+  /// Ascending when true; "date added" defaults to descending (newest first).
+  bool _sortAsc = false;
+
+  /// Number of records currently revealed (grows as the user scrolls).
+  int _visibleCount = _kPageSize;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +54,62 @@ class _RecordsPageState extends State<RecordsPage> {
   Future<void> _reload() async {
     final records = await context.read<AppStore>().loadRecords(widget.modelId);
     if (mounted) setState(() => _records = records);
+  }
+
+  void _changeSort(int fieldId) {
+    setState(() {
+      if (fieldId == _sortFieldId) {
+        _sortAsc = !_sortAsc; // re-selecting the active field flips direction
+      } else {
+        _sortFieldId = fieldId;
+        // Sensible default direction: newest-first for date added, A→Z for fields.
+        _sortAsc = fieldId != _kSortByDateAdded;
+      }
+      _visibleCount = _kPageSize; // restart paging from the top after a re-sort
+    });
+  }
+
+  /// Returns the records sorted by the active key/direction. Unset values always
+  /// sink to the bottom regardless of direction; ties break by id for stability.
+  List<RecordEntry> _sorted(AppModel model, List<RecordEntry> records) {
+    if (_sortFieldId == _kSortByDateAdded) {
+      final out = [...records]
+        ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      return _sortAsc ? out : out.reversed.toList();
+    }
+    final FieldDef field =
+        model.fields.firstWhere((f) => f.id == _sortFieldId);
+    final out = [...records]
+      ..sort((a, b) {
+        final va = a.value(field.id);
+        final vb = b.value(field.id);
+        if (va == null || vb == null) {
+          if (va == null && vb == null) return a.id.compareTo(b.id);
+          return va == null ? 1 : -1; // nulls last, both directions
+        }
+        var c = _compareTyped(va, vb, field.type);
+        if (c == 0) c = a.id.compareTo(b.id);
+        return _sortAsc ? c : -c;
+      });
+    return out;
+  }
+
+  int _compareTyped(Object a, Object b, FieldType type) {
+    switch (type) {
+      case FieldType.int_:
+        return (a as int).compareTo(b as int);
+      case FieldType.float:
+        return (a as double).compareTo(b as double);
+      case FieldType.bool_:
+        return ((a as bool) ? 1 : 0).compareTo((b as bool) ? 1 : 0);
+      case FieldType.date:
+        final da = DateTime.tryParse(a.toString());
+        final db = DateTime.tryParse(b.toString());
+        if (da != null && db != null) return da.compareTo(db);
+        return a.toString().compareTo(b.toString());
+      case FieldType.str:
+        return a.toString().toLowerCase().compareTo(b.toString().toLowerCase());
+    }
   }
 
   @override
@@ -73,6 +146,13 @@ class _RecordsPageState extends State<RecordsPage> {
                           title: model.name,
                           subtitle: plural(model.recordCount, 'record'),
                         ),
+                        if (hasFields && records.isNotEmpty)
+                          _SortBar(
+                            fields: model.fields,
+                            sortFieldId: _sortFieldId,
+                            ascending: _sortAsc,
+                            onSelect: _changeSort,
+                          ),
                         Expanded(child: _body(context, model, hasFields, records)),
                       ],
                     ),
@@ -129,20 +209,37 @@ class _RecordsPageState extends State<RecordsPage> {
         message: 'Add your first record to start filling this model.',
       );
     }
+
+    final sorted = _sorted(model, records);
+    final visible = _visibleCount.clamp(0, sorted.length);
+    final hasMore = visible < sorted.length;
+
     return ListView.separated(
       padding: const EdgeInsets.only(top: 4, bottom: 130),
-      itemCount: records.length,
+      itemCount: visible + (hasMore ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: 12),
-      itemBuilder: (_, i) => RiseIn(
-        index: i,
-        child: _RecordCard(
-          model: model,
-          record: records[i],
+      itemBuilder: (_, i) {
+        if (i >= visible) {
+          // Footer: reaching it means the user scrolled to the end — reveal the
+          // next page after this frame. Appended rows push it back off-screen,
+          // so it loads exactly one page per scroll rather than all at once.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && _visibleCount < sorted.length) {
+              setState(() => _visibleCount += _kPageSize);
+            }
+          });
+          return const _LoadMoreFooter();
+        }
+        return RiseIn(
           index: i,
-          onTap: () => _editRecord(context, model, records[i]),
-          onDelete: () => _deleteRecord(records[i]),
-        ),
-      ),
+          child: _RecordCard(
+            model: model,
+            record: sorted[i],
+            onTap: () => _editRecord(context, model, sorted[i]),
+            onDelete: () => _deleteRecord(sorted[i]),
+          ),
+        );
+      },
     );
   }
 
@@ -171,14 +268,12 @@ class _RecordCard extends StatelessWidget {
   const _RecordCard({
     required this.model,
     required this.record,
-    required this.index,
     required this.onTap,
     required this.onDelete,
   });
 
   final AppModel model;
   final RecordEntry record;
-  final int index;
   final VoidCallback onTap;
   final VoidCallback onDelete;
 
@@ -201,9 +296,6 @@ class _RecordCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text((index + 1).toString().padLeft(2, '0'),
-                    style: AppText.display(size: 15, weight: FontWeight.w900)),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     primary.type.format(record.value(primary.id)),
@@ -233,6 +325,117 @@ class _RecordCard extends StatelessWidget {
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Right-aligned "Sort by" pill that opens a menu of fields (plus "Date added").
+/// Re-selecting the active key flips the direction; the chip shows the arrow.
+class _SortBar extends StatelessWidget {
+  const _SortBar({
+    required this.fields,
+    required this.sortFieldId,
+    required this.ascending,
+    required this.onSelect,
+  });
+
+  final List<FieldDef> fields;
+  final int sortFieldId;
+  final bool ascending;
+  final ValueChanged<int> onSelect;
+
+  String get _activeLabel {
+    if (sortFieldId == _kSortByDateAdded) return 'Date added';
+    final match = fields.where((f) => f.id == sortFieldId);
+    return match.isEmpty ? 'Date added' : match.first.name;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          PopupMenuButton<int>(
+            tooltip: 'Sort records',
+            color: T.surface2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(T.rField),
+              side: const BorderSide(color: T.line),
+            ),
+            onSelected: onSelect,
+            itemBuilder: (_) => [
+              _item(_kSortByDateAdded, 'Date added'),
+              for (final f in fields) _item(f.id, f.name),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: T.surface,
+                borderRadius: BorderRadius.circular(T.rChip),
+                border: Border.all(color: T.line),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('SORT',
+                      style: AppText.mono(
+                          size: 10, color: T.textDim, letterSpacing: 1)),
+                  const SizedBox(width: 8),
+                  Text(_activeLabel,
+                      style: AppText.ui(size: 13, weight: FontWeight.w600)),
+                  const SizedBox(width: 4),
+                  Icon(ascending ? Icons.arrow_upward : Icons.arrow_downward,
+                      size: 14, color: T.textMid),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<int> _item(int id, String label) {
+    final selected = id == sortFieldId;
+    return PopupMenuItem<int>(
+      value: id,
+      height: 42,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(label,
+                style: AppText.ui(
+                    size: 14,
+                    weight: selected ? FontWeight.w700 : FontWeight.w500,
+                    color: selected ? T.text : T.textMid)),
+          ),
+          if (selected)
+            Icon(ascending ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 15, color: T.accent),
+        ],
+      ),
+    );
+  }
+}
+
+/// Subtle footer shown while more records remain to be revealed on scroll.
+class _LoadMoreFooter extends StatelessWidget {
+  const _LoadMoreFooter();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+              strokeWidth: 2, color: T.textDim),
         ),
       ),
     );
